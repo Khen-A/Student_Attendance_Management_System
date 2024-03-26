@@ -160,10 +160,13 @@ def clear(line):
 def input_key(__prompt):
     print(__prompt, end='', flush=True)  # Print the prompt without a newline
     while True:
-        key = msvcrt.getch().decode()
-        if key:
-            print("\n", end='')
-            return key
+        try:
+            key = msvcrt.getch().decode()
+            if key:
+                print("\n", end='')
+                return key
+        except UnicodeDecodeError:
+            continue
 
 
 def not_empty_input(__prompt):
@@ -193,7 +196,7 @@ def tab_title(title):
 
 
 def main():
-    tab_title("STUDENT ATTENDACE")
+    tab_title("STUDENT ATTENDANCE")
     while True:
         print("   OPTION:")
         print("      [1] Check Attendance")
@@ -230,19 +233,25 @@ def add_student(stud_no, name, department, degree, level, signature):
                    (stud_no, name, department, degree, level, signature))
 
 
-def add_schedule(test):
-    cursor.executemany("INSERT INTO ClassSchedule VALUES (?, ?, ?, ?)", test)
+def add_schedule(sched):
+    cursor.executemany("INSERT INTO ClassSchedule VALUES (?, ?, ?, ?)", sched)
 
 
-def attendance(stud_no, course, day, time, date, time_in, status):
-    cursor.execute("INSERT INTO Attendance VALUES (?, ?, ?, ?, ?, ?, ?)",
-                   (stud_no, course, day, time, date, time_in, status))
+def attendance(attdnt):
+    cursor.executemany("INSERT INTO Attendance VALUES (?, ?, ?, ?, ?, ?, ?)", attdnt)
 
 
 def check_attendance():
     tab_title("Check attendance")
     print("   Student Details")
     print("   ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
+
+    attendance_log = []
+    next_schedule = []
+    status = "PENDING"
+    next_schedule_found = False
+    schedule.clear()
+
     stud_no = str(not_empty_input("      Student No. : "))
 
     cursor.execute("SELECT * FROM Student_Info WHERE Student_No = ?", (stud_no,))
@@ -253,16 +262,201 @@ def check_attendance():
             print(f"      Name        : {val[1]}\n"
                   f"      Department  : {val[2]}\n"
                   f"      Degree      : {val[3]}\n"
-                  f"      Level       : {val[4]}")
+                  f"      Level       : {val[4]}\n")
 
+            current_date = datetime.datetime.now().date().strftime("%m/%d/%y")
             current_day = datetime.datetime.now().date().strftime("%A")
-            cursor.execute("SELECT * FROM ClassSchedule WHERE Student_No = ? AND _Day = ?", (stud_no, current_day,))
+            current_time = datetime.datetime.now().time().strftime("%I:%M %p")
+
+            if current_time.startswith("0"):
+                current_time = current_time[1:]
+
+            cursor.execute("SELECT * FROM ClassSchedule WHERE Student_No = ? AND _Day = ?",
+                           (stud_no, current_day,))
             sched = cursor.fetchall()
+
             if sched:
-                for sch in sched:
-                    print(f"      Course      : {sch[1]}\n")
-                    print(f"      Time        : {sch[3]}\n")
-            os.system("pause")
+                for sched_now in sched:
+                    schedule.append(sched_now)
+            else:
+                print("No schedule")
+                os.system("pause")
+                break
+
+            # _log = None
+            for index, (stud_no, course, day, time) in enumerate(schedule):
+                start_time, end_time = time.split(" - ")
+
+                start_time = convert_to_24hrs(start_time)
+                end_time = convert_to_24hrs(end_time)
+                time_now = convert_to_24hrs(current_time)
+
+                if end_time <= time_now:
+                    # Store the schedule in the attendance log
+                    cursor.execute("SELECT * FROM Attendance WHERE Student_No = ? AND _Course = ? "
+                                   "AND _Day = ? AND _Time = ? AND _Date = ?",
+                                   (stud_no, course, day, time, current_date))
+                    attn_log = cursor.fetchall()
+                    if not attn_log:
+                        attendance_log.append((stud_no, course, day, time, current_date, "N/A", "ABSENT"))
+                        attendance(attendance_log)
+                        connection.commit()
+                        attendance_log.clear()
+
+                if start_time <= time_now <= end_time:
+                    # Searching for current schedule
+                    schedule[index] = (stud_no, course, day, time, current_date, current_time)
+                    # Store the schedule in the attendance log
+                    attendance_log.append(schedule[index])
+
+                    if index + 1 < len(schedule):
+                        _next = schedule[index + 1]
+                        next_schedule.append(_next)
+                    break
+            else:
+                for index, (stud_no, course, day, time) in enumerate(schedule):
+                    next_start_time, next_end_time = time.split(" - ")
+
+                    next_start_time = convert_to_24hrs(next_start_time)
+                    time_now = convert_to_24hrs(current_time)
+
+                    if next_start_time >= time_now:
+                        schedule[index] = (stud_no, course, day, time)
+                        next_schedule.append(schedule[index])
+                        next_schedule_found = True
+                        break
+
+                if next_schedule_found:
+                    print("┌─────────────────────────────────────────────┐".center(90))
+                    print(f"│{"NEXT SCHEDULE":^45}│".center(90))
+                    print("├─────────────────────────────────────────────┤".center(90))
+                    for x in next_schedule:
+                        print(f"│ Course Title : {x[1]:<29}│".center(90))
+                        print(f"│ Time         : {x[3]:<29}│".center(90))
+                        print("└─────────────────────────────────────────────┘\n".center(90))
+                else:
+                    print("┌───────────────────────────────────────────────────────────────────────┐".center(90))
+                    print(f"│{"SCHEDULE TODAY":^71}│".center(90))
+                    print("├───────────────────┬───────────────────────┬────────────┬──────────────┤".center(90))
+                    print((f"│{"COURSE TITLE":^19}".ljust(19) + f"│{"TIME":^23}".ljust(23) +
+                          f"│{"STATUS":^12}".ljust(12) + f"│{"TIME IN":^14}".ljust(14) + "│").center(90))
+                    print("├───────────────────┼───────────────────────┼────────────┼──────────────┤"
+                          .center(90))
+                    for attn, (stud_no, course, day, time) in enumerate(schedule):
+                        cursor.execute("SELECT * FROM Attendance WHERE Student_No = ? AND _Course = ? "
+                                       "AND _Day = ? AND _Time = ? AND _Date = ?",
+                                       (stud_no, course, day, time, current_date))
+                        _attendance = cursor.fetchall()
+                        if _attendance:
+                            for log in _attendance:
+                                print((f"│ {log[1]}".ljust(20) + f"│ {log[3]}".ljust(24) +
+                                       f"│{log[6]:^12}".ljust(12) + f"│{log[5]:^14}".ljust(14) + "│").center(90))
+                    print("└───────────────────┴───────────────────────┴────────────┴──────────────┘"
+                          .center(90))
+
+                while True:
+                    user = input_key("      Press[N] to check again or [Y] to Exit: ")
+                    match user.upper():
+                        case "N":
+                            clear(100)
+                            check_attendance()
+                            break
+                        case "Y":
+                            exit()
+                    clear(1)
+
+            for attn, (stud_no, course, day, time, current_date, current_time) in enumerate(attendance_log):
+                cursor.execute("SELECT * FROM Attendance WHERE Student_No = ? AND _Course = ? "
+                               "AND _Day = ? AND _Time = ? AND _Date = ?",
+                               (stud_no, course, day, time, current_date))
+                _attendance = cursor.fetchall()
+
+                while not _attendance:
+                    cursor.execute("SELECT _Signature FROM Student_Info WHERE Student_No = ?", (stud_no,))
+                    info = cursor.fetchone()
+
+                    signature = info[0]
+                    max_entry = 3
+                    for attn_log in attendance_log:
+                        print("┌─────────────────────────────────────────────┐".center(90))
+                        print(f"│{"SCHEDULE NOW":^45}│".center(90))
+                        print("├─────────────────────────────────────────────┤".center(90))
+                        print(f"│ Course Title : {attn_log[1]:<29}│".center(90))
+                        print(f"│ Time         : {attn_log[3]:<29}│".center(90))
+                        print(f"│ Status       : {status:<29}│".center(90))
+                        print("├─────────────────────────────────────────────┤".center(90))
+
+                        while max_entry > 0:
+                            print("│                                             │".center(90))
+                            print("└─────────────────────────────────────────────┘".center(90))
+                            print("\033[2F", end="")
+                            key_signature = input(f"{"":<21}│ Signature: ")
+                            if key_signature == "":
+                                clear(1)
+                            else:
+                                if key_signature == signature:
+                                    status = "PRESENT"
+                                    break
+                                else:
+                                    print("\033[3E", end="")
+                                    if max_entry > 1:
+                                        print(f"{"":<6}MSG: Wrong signature. You have {max_entry - 1} attempt(s) left.")
+                                    else:
+                                        print(f"{"":<6}MSG: All attempts used. You're marked as ABSENT. ")
+                                    print("\033[5F", end="")
+                                    max_entry -= 1
+
+                                    if max_entry == 0:
+                                        status = "ABSENT"
+                                        break
+
+                        attendance_log.clear()
+                        current_time = datetime.datetime.now().time().strftime("%I:%M %p")
+
+                        if current_time.startswith("0"):
+                            current_time = current_time[1:]
+
+                        attendance_log = [(attn_log[0], attn_log[1], attn_log[2], attn_log[3],
+                                           attn_log[4], current_time, status)]
+
+                        attendance(attendance_log)
+                        connection.commit()
+
+                        _attendance = attendance_log
+                        print("\033[1E", end="")
+                        clear(9)
+                else:
+                    for log in _attendance:
+                        print("┌─────────────────────────────────────────────┐".center(90))
+                        print(f"│{"SCHEDULE NOW":^45}│".center(90))
+                        print("├─────────────────────────────────────────────┤".center(90))
+                        print(f"│ Course Title : {log[1]:<29}│".center(90))
+                        print(f"│ Time         : {log[3]:<29}│".center(90))
+                        print(f"│ Status       : {log[6]:<29}│".center(90))
+                        print(f"│ Time In      : {log[5]:<29}│".center(90))
+                        print("└─────────────────────────────────────────────┘\n".center(90))
+
+                    if next_schedule:
+                        for _schedule in next_schedule:
+                            print("┌─────────────────────────────────────────────┐".center(90))
+                            print(f"│{"NEXT SCHEDULE":^45}│".center(90))
+                            print("├─────────────────────────────────────────────┤".center(90))
+                            print(f"│ Course Title : {_schedule[1]:<29}│".center(90))
+                            print(f"│ Time         : {_schedule[3]:<29}│".center(90))
+                            print("└─────────────────────────────────────────────┘\n".center(90))
+
+                    while True:
+                        user = input_key("      Press[N] to check again or [Y] to Exit: ")
+                        match user.upper():
+                            case "N":
+                                clear(100)
+                                check_attendance()
+                                break
+                            case "Y":
+                                exit()
+                        clear(1)
+                    break
+
     else:
         while True:
             clear(3)
