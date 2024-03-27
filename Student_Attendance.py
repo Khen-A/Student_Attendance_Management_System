@@ -145,9 +145,9 @@ def not_empty_input(__prompt):
 
 
 def tab_title(title):
-    print("================================================================================".center(80))
-    print(title.center(80))
-    print("================================================================================".center(80))
+    print("==========================================================================================".center(90))
+    print(title.center(90))
+    print("==========================================================================================".center(90))
 
 
 def main():
@@ -157,6 +157,7 @@ def main():
         print("      [1] Check Attendance")
         print("      [2] Register New Student")
         print("      [3] Modify Class Schedule")
+        print("      [4] Modify Student Details")
         print("      [0] Exit\n")
 
         choice2 = input_key("   Choice: ")
@@ -165,17 +166,19 @@ def main():
             case "0":
                 exit()
             case "1":
-                clear(9)
+                clear(11)
                 check_attendance()
                 break
             case "2":
                 clear(11)
                 register_new_student()
+                break
             case "3":
                 print("Invalid Choice")
+            case "4":
+                print("Invalid Choice")
             case _:
-                # Deleting current menu option after entering invalid input
-                clear(9)
+                clear(8)
                 continue
         break
 
@@ -186,29 +189,34 @@ def get_students_info(student_no):
 
     if data:
         for val in data:
-            print(f"   Name\t\t\t: {val[1]}\n"
-                  f"   Department\t: {val[2]}\n"
-                  f"   Degree\t\t: {val[3]}\n"
-                  f"   Level\t\t: {val[4]}")
+            print(f"      Name        : {val[1]}\n"
+                  f"      Department  : {val[2]}\n"
+                  f"      Degree      : {val[3]}\n"
+                  f"      Level       : {val[4]}")
     else:
-        clear(1)
-        print("OPTION:")
-        print("   [1] Check again")
-        print("   [0] Return to Home\n")
-        print("MSG: Student currently not enrolled!!!")
+        clear(3)
+        print("   OPTION:")
+        print("      [1] Check again")
+        print("      [2] Register new student")
+        print("      [0] Return to Home\n")
+        print("   MSG: Student currently not enrolled!!!")
 
-        choice = input_key("choice: ")
+        choice = input_key("   choice: ")
         match choice:
             case("0"):
                 clear(8)
                 main()
             case("1"):
-                clear(8)
+                clear(11)
                 check_attendance()
+            case("2"):
+                clear(11)
+                register_new_student()
             case _:
                 clear(5)
                 get_students_info(choice)
         return
+    os.system("pause")
 
 
 def add_student(no, name, department, degree, level, signature):
@@ -221,15 +229,11 @@ def add_schedule(test):
 
 
 def check_attendance():
+    tab_title("Check attendance")
+    print("   Student Details")
+    print("   ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
     while True:
-        print("Check attendance")
-        print("﹉﹉﹉﹉﹉﹉﹉﹉﹉")
-        student_no = str(input("   Student No.\t: "))
-
-        if student_no == "":
-            clear(3)
-            continue
-
+        student_no = str(not_empty_input("      Student No. : "))
         get_students_info(student_no)
         break
 
@@ -306,19 +310,19 @@ def add_course(stud_no, sched_day):
 
 def register_new_student():
     tab_title("REGISTER NEW STUDENT")
-    print("   Student Information")
-    print("   ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
+    print("   Student Details")
+    print("   ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
 
     while True:
         stud_no = str(not_empty_input("      Student No. : "))
-        try:
-            cursor.execute(f"SELECT * FROM Student_Info WHERE Student_No = {stud_no}")
 
+        cursor.execute("SELECT * FROM Student_Info WHERE Student_No = ?", (stud_no,))
+        data = cursor.fetchall()
+        if data:
             msg = input_key("\n   MSG: Student already registered. Press[M] to modify schedule. ")
             if msg:
                 clear(3)
-
-        except sqlite3.OperationalError:
+        else:
             break
 
     stud_name = str(not_empty_input("      Name        : ").upper())
@@ -378,14 +382,12 @@ def register_new_student():
         print("Already Exists")
 
 
-run_as_administrator()
-set_console_title("Student Attendance Management System")
-set_console_size(80, 40)
-center_console_window()
-set_text_color(color["Green"])
-
-
 if __name__ == "__main__":
+    run_as_administrator()
+    set_console_title("Student Attendance Management System")
+    set_console_size(90, 45)
+    center_console_window()
+    set_text_color(color["Green"])
     main()
 
 cursor.execute("SELECT * FROM Student_Info")
