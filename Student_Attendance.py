@@ -13,6 +13,25 @@ import re
 
 schedule = []
 
+color = {
+    "Black": 0x0000,
+    "Blue": 0x0001,
+    "Green": 0x0002,
+    "Aqua": 0x0003,
+    "Red": 0x0004,
+    "Purple": 0x0005,
+    "Yellow": 0x0006,
+    "White": 0x0007,
+    "Gray": 0x0008,
+    "Light_Blue": 0x0009,
+    "Light_Green": 0x000A,
+    "Light_Aqua": 0x000B,
+    "Light_Red": 0x000C,
+    "Light_Purple": 0x000D,
+    "Light_Yellow": 0x000E,
+    "Bright_White": 0x000F,
+}
+
 # Setting up connection with SAData.db file
 connection = sqlite3.connect('SAData.db')
 
@@ -95,6 +114,11 @@ def set_console_size(width: int, height: int):
         style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_STYLE)
         style &= ~WS_SIZEBOX
         ctypes.windll.user32.SetWindowLongW(hwnd, GWL_STYLE, style)
+
+
+def set_text_color(__color):
+    hConsole = ctypes.windll.kernel32.GetStdHandle(-11)
+    ctypes.windll.kernel32.SetConsoleTextAttribute(hConsole, __color)
 
 
 def clear(line):
@@ -358,6 +382,8 @@ run_as_administrator()
 set_console_title("Student Attendance Management System")
 set_console_size(80, 40)
 center_console_window()
+set_text_color(color["Green"])
+
 
 if __name__ == "__main__":
     main()
