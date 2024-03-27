@@ -3,7 +3,6 @@
 # Degree: BS Electronics And Communication Engineering
 # Level: 1st Year
 #
-
 # Import library
 import sqlite3
 import msvcrt
