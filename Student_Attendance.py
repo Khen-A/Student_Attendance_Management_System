@@ -2,6 +2,7 @@
 # Created by: Khen Jomarie L. Alcantara
 # Degree: BS Electronics And Communication Engineering
 # Level: 1st Year
+#
 
 # Import library
 import sqlite3
