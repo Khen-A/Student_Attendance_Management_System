@@ -5,32 +5,64 @@
 
 # Import library
 import sqlite3
+import datetime
 import msvcrt
 import ctypes.wintypes
 import os
 import sys
 import re
+import textwrap
+import time
 
+days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 schedule = []
 
-color = {
-    "Black": 0x0000,
-    "Blue": 0x0001,
-    "Green": 0x0002,
-    "Aqua": 0x0003,
-    "Red": 0x0004,
-    "Purple": 0x0005,
-    "Yellow": 0x0006,
-    "White": 0x0007,
-    "Gray": 0x0008,
-    "Light_Blue": 0x0009,
-    "Light_Green": 0x000A,
-    "Light_Aqua": 0x000B,
-    "Light_Red": 0x000C,
-    "Light_Purple": 0x000D,
-    "Light_Yellow": 0x000E,
-    "Bright_White": 0x000F,
-}
+class text:
+    none = "\033[0m"
+    class color:
+
+        class foreground:
+            black = "\033[30m"
+            red = "\033[31m"
+            green = "\033[32m"
+            yellow = "\033[33m"
+            blue = "\033[34m"
+            magenta = "\033[35m"
+            cyan = "\033[36m"
+            light_gray = "\033[37m"
+            dark_gray = "\033[90m"
+            light_red = "\033[91m"
+            light_green = "\033[92m"
+            light_yellow = "\033[93m"
+            light_blue = "\033[94m"
+            light_magenta = "\033[95m"
+            light_cyan = "\033[96m"
+            white = "\033[97m"
+
+        class background:
+            black = "\033[40m"
+            red = "\033[41m"
+            green = "\033[42m"
+            yellow = "\033[43m"
+            blue = "\033[44m"
+            magenta = "\033[45m"
+            cyan = "\033[46m"
+            light_gray = "\033[47m"
+            dark_gray = "\033[100m"
+            light_red = "\033[101m"
+            light_green = "\033[102m"
+            light_yellow = "\033[103m"
+            light_blue = "\033[104m"
+            light_magenta = "\033[105m"
+            light_cyan = "\033[106m"
+            white = "\033[107m"
+
+    class style:
+        bold = "\033[1m"
+        underline = "\033[4m"
+        no_underline = "\033[24m"
+        reverse = "\033[7m"
+        not_reverse = "\033[27m"
 
 # Setting up connection with SAData.db file
 connection = sqlite3.connect('SAData.db')
@@ -116,11 +148,6 @@ def set_console_size(width: int, height: int):
         ctypes.windll.user32.SetWindowLongW(hwnd, GWL_STYLE, style)
 
 
-def set_text_color(__color):
-    hConsole = ctypes.windll.kernel32.GetStdHandle(-11)
-    ctypes.windll.kernel32.SetConsoleTextAttribute(hConsole, __color)
-
-
 def clear(line):
     for _ in range(line):
         print("\x1b[1A\x1b[2K", end="\r")
@@ -145,13 +172,24 @@ def not_empty_input(__prompt):
 
 
 def tab_title(title):
+    # Get the current date
+    current_date = datetime.datetime.now().date().strftime("%B %d, %Y | %A")
+
+    # Get the current time
+    current_time = datetime.datetime.now().time().strftime("%I:%M %p")
+    print(text.color.foreground.green, end="")
     print("==========================================================================================".center(90))
-    print(title.center(90))
+    print(text.color.foreground.yellow, end="")
+    print(text.style.bold + title.center(90) + text.none)
+    print(text.color.foreground.light_cyan, end="")
+    print(f"{current_date}                                                  {current_time}".center(90))
+    print(text.color.foreground.green, end="")
     print("==========================================================================================".center(90))
+    print(text.none, end="")
 
 
 def main():
-    tab_title("STUDENT ATTENDANCE")
+    tab_title("STUDENT ATTENDACE")
     while True:
         print("   OPTION:")
         print("      [1] Check Attendance")
@@ -166,11 +204,11 @@ def main():
             case "0":
                 exit()
             case "1":
-                clear(11)
+                clear(12)
                 check_attendance()
                 break
             case "2":
-                clear(11)
+                clear(12)
                 register_new_student()
                 break
             case "3":
@@ -181,42 +219,6 @@ def main():
                 clear(8)
                 continue
         break
-
-
-def get_students_info(student_no):
-    cursor.execute("SELECT * FROM Student_Info WHERE Student_No = ?", (student_no,))
-    data = cursor.fetchall()
-
-    if data:
-        for val in data:
-            print(f"      Name        : {val[1]}\n"
-                  f"      Department  : {val[2]}\n"
-                  f"      Degree      : {val[3]}\n"
-                  f"      Level       : {val[4]}")
-    else:
-        clear(3)
-        print("   OPTION:")
-        print("      [1] Check again")
-        print("      [2] Register new student")
-        print("      [0] Return to Home\n")
-        print("   MSG: Student currently not enrolled!!!")
-
-        choice = input_key("   choice: ")
-        match choice:
-            case("0"):
-                clear(8)
-                main()
-            case("1"):
-                clear(11)
-                check_attendance()
-            case("2"):
-                clear(11)
-                register_new_student()
-            case _:
-                clear(5)
-                get_students_info(choice)
-        return
-    os.system("pause")
 
 
 def add_student(no, name, department, degree, level, signature):
@@ -232,10 +234,44 @@ def check_attendance():
     tab_title("Check attendance")
     print("   Student Details")
     print("   ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
-    while True:
-        student_no = str(not_empty_input("      Student No. : "))
-        get_students_info(student_no)
-        break
+    student_no = str(not_empty_input("      Student No. : "))
+
+    cursor.execute("SELECT * FROM Student_Info WHERE Student_No = ?", (student_no,))
+    data = cursor.fetchall()
+
+    if data:
+        for val in data:
+            print(f"      Name        : {val[1]}\n"
+                  f"      Department  : {val[2]}\n"
+                  f"      Degree      : {val[3]}\n"
+                  f"      Level       : {val[4]}")
+            os.system("pause")
+    else:
+        while True:
+            clear(3)
+            print("   OPTION:")
+            print("      [1] Check again")
+            print("      [2] Register new student")
+            print("      [0] Return to Home\n")
+            print("   MSG: Student currently not enrolled!!!")
+
+            choice = input_key("   choice: ")
+            match choice:
+                case ("0"):
+                    clear(11)
+                    main()
+                    break
+                case ("1"):
+                    clear(11)
+                    check_attendance()
+                    break
+                case ("2"):
+                    clear(11)
+                    register_new_student()
+                    break
+                case _:
+                    clear(4)
+        return
 
 
 def validate_time_format(time):
@@ -341,21 +377,21 @@ def register_new_student():
 
         choice1 = input_key("   Choice: ")
 
-        days = None
+        days_of_week = None
         match choice1:
             case "0":
-                clear(17)
+                clear(100)
                 main()
                 break
             case "1":
                 clear(8)
-                days = "Weekdays only"
-                print(f"   Class Schedule [{days}]")
+                days_of_week = "Weekdays only"
+                print(f"   Class Schedule [{days_of_week}]")
                 print("   ‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
             case "2":
                 clear(8)
-                days = "Include weekends"
-                print(f"   Class Schedule [{days}]")
+                days_of_week = "Include weekends"
+                print(f"   Class Schedule [{days_of_week}]")
                 print("   ‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
             case _:
                 clear(6)
@@ -363,13 +399,13 @@ def register_new_student():
         break
 
     while True:
-        if days == "Weekdays only":
-            for day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]:
+        if days_of_week == "Weekdays only":
+            for day in days[:5]:
                 print(f"      ► {day}")
                 add_course(stud_no, day)
             break
-        if days == "Include weekends":
-            for day in ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]:
+        if days_of_week == "Include weekends":
+            for day in days:
                 print(f"      ► {day}")
                 add_course(stud_no, day)
             break
@@ -387,11 +423,4 @@ if __name__ == "__main__":
     set_console_title("Student Attendance Management System")
     set_console_size(90, 45)
     center_console_window()
-    set_text_color(color["Green"])
     main()
-
-cursor.execute("SELECT * FROM Student_Info")
-rows = cursor.fetchall()
-
-for row in rows:
-    print(row)
