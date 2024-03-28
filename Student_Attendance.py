@@ -11,59 +11,57 @@ import ctypes.wintypes
 import os
 import sys
 import re
-import textwrap
-import time
 
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 schedule = []
 
 
-class text:
-    none = "\033[0m"
+class Text:
+    NONE = "\033[0m"
 
-    class color:
-        class foreground:
-            black = "\033[30m"
-            red = "\033[31m"
-            green = "\033[32m"
-            yellow = "\033[33m"
-            blue = "\033[34m"
-            magenta = "\033[35m"
-            cyan = "\033[36m"
-            light_gray = "\033[37m"
-            dark_gray = "\033[90m"
-            light_red = "\033[91m"
-            light_green = "\033[92m"
-            light_yellow = "\033[93m"
-            light_blue = "\033[94m"
-            light_magenta = "\033[95m"
-            light_cyan = "\033[96m"
-            white = "\033[97m"
+    class Color:
+        class Foreground:
+            Black = "\033[30m"
+            Red = "\033[31m"
+            Green = "\033[32m"
+            Yellow = "\033[33m"
+            Blue = "\033[34m"
+            Magenta = "\033[35m"
+            Cyan = "\033[36m"
+            Light_Gray = "\033[37m"
+            Dark_Gray = "\033[90m"
+            Light_Red = "\033[91m"
+            Light_Green = "\033[92m"
+            Light_Yellow = "\033[93m"
+            Light_Blue = "\033[94m"
+            Light_Magenta = "\033[95m"
+            Light_Cyan = "\033[96m"
+            White = "\033[97m"
 
-        class background:
-            black = "\033[40m"
-            red = "\033[41m"
-            green = "\033[42m"
-            yellow = "\033[43m"
-            blue = "\033[44m"
-            magenta = "\033[45m"
-            cyan = "\033[46m"
-            light_gray = "\033[47m"
-            dark_gray = "\033[100m"
-            light_red = "\033[101m"
-            light_green = "\033[102m"
-            light_yellow = "\033[103m"
-            light_blue = "\033[104m"
-            light_magenta = "\033[105m"
-            light_cyan = "\033[106m"
-            white = "\033[107m"
+        class Background:
+            Black = "\033[40m"
+            Red = "\033[41m"
+            Green = "\033[42m"
+            Yellow = "\033[43m"
+            Blue = "\033[44m"
+            Magenta = "\033[45m"
+            Cyan = "\033[46m"
+            Light_Gray = "\033[47m"
+            Dark_Gray = "\033[100m"
+            Light_Red = "\033[101m"
+            Light_Green = "\033[102m"
+            Light_Yellow = "\033[103m"
+            Light_Blue = "\033[104m"
+            Light_Magenta = "\033[105m"
+            Light_Cyan = "\033[106m"
+            White = "\033[107m"
 
-    class style:
-        bold = "\033[1m"
-        underline = "\033[4m"
-        no_underline = "\033[24m"
-        reverse = "\033[7m"
-        not_reverse = "\033[27m"
+    class Style:
+        Bold = "\033[1m"
+        Underline = "\033[4m"
+        No_Underline = "\033[24m"
+        Reverse = "\033[7m"
+        Not_Reverse = "\033[27m"
 
 
 # Setting up connection with SAData.db file
@@ -139,19 +137,19 @@ def set_console_size(width: int, height: int):
     os.system(f"mode con cols={width} lines={height}")
 
     # Define necessary constants
-    GWL_STYLE = -16
-    WS_SIZEBOX = 0x00040000
-    WS_MAXIMIZEBOX = 0x00010000
+    gwl_style = -16
+    ws_sizebox = 0x00040000
+    ws_maximizebox = 0x00010000
 
     # Get handle to the console window
     hwnd = ctypes.windll.kernel32.GetConsoleWindow()
 
     # Modify the window style to remove the sizing border
     if hwnd != 0:
-        style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_STYLE)
-        style &= ~WS_SIZEBOX
-        style &= ~WS_MAXIMIZEBOX
-        ctypes.windll.user32.SetWindowLongW(hwnd, GWL_STYLE, style)
+        style = ctypes.windll.user32.GetWindowLongW(hwnd, gwl_style)
+        style &= ~ws_sizebox
+        style &= ~ws_maximizebox
+        ctypes.windll.user32.SetWindowLongW(hwnd, gwl_style, style)
 
 
 def clear(line):
@@ -183,15 +181,15 @@ def tab_title(title):
 
     # Get the current time
     current_time = datetime.datetime.now().time().strftime("%I:%M %p")
-    print(text.color.foreground.green, end="")
+    print(Text.Color.Foreground.Green, end="")
     print("==========================================================================================".center(90))
-    print(text.color.foreground.yellow, end="")
-    print(text.style.bold + title.center(90) + text.none)
-    print(text.color.foreground.light_cyan, end="")
+    print(Text.Color.Foreground.Yellow, end="")
+    print(Text.Style.Bold + title.center(90) + Text.NONE)
+    print(Text.Color.Foreground.Light_Cyan, end="")
     print(f"{current_date}                                                  {current_time}".center(90))
-    print(text.color.foreground.green, end="")
+    print(Text.Color.Foreground.Green, end="")
     print("==========================================================================================".center(90))
-    print(text.none, end="")
+    print(Text.NONE, end="")
 
 
 def main():
@@ -236,9 +234,9 @@ def add_schedule(test):
     cursor.executemany("INSERT INTO ClassSchedule VALUES (?, ?, ?, ?)", test)
 
 
-def attendance(stud_no, course, time, date, time_in, status):
-    cursor.execute("INSERT INTO Attendance VALUES (?, ?, ?, ?, ?, ?)",
-                   (stud_no, course, time, date, time_in, status))
+def attendance(stud_no, course, day, time, date, time_in, status):
+    cursor.execute("INSERT INTO Attendance VALUES (?, ?, ?, ?, ?, ?, ?)",
+                   (stud_no, course, day, time, date, time_in, status))
 
 
 def check_attendance():
@@ -261,7 +259,6 @@ def check_attendance():
             cursor.execute("SELECT * FROM ClassSchedule WHERE Student_No = ? AND _Day = ?", (stud_no, current_day,))
             sched = cursor.fetchall()
             if sched:
-                attendance(stud_no, sched[1], )
                 for sch in sched:
                     print(f"      Course      : {sch[1]}\n")
                     print(f"      Time        : {sch[3]}\n")
@@ -305,7 +302,7 @@ def validate_time_format(time):
         return False
 
 
-def convert_to_24Hrs(time_str):
+def convert_to_24hrs(time_str):
     # Convert time string from 12-hour format to minutes
     parts = time_str.split()
     hour, minute = map(int, parts[0].split(':'))
@@ -315,13 +312,13 @@ def convert_to_24Hrs(time_str):
 
 
 def check_conflict(schedules, day, time):
-    new_start, new_end = map(convert_to_24Hrs, time.split(' - '))
+    new_start, new_end = map(convert_to_24hrs, time.split(' - '))
 
     for index, (stud_no, sched_course, sched_day, sched_time) in enumerate(schedules):
         if sched_day != day:
             continue
 
-        start, end = map(convert_to_24Hrs, sched_time.split(' - '))
+        start, end = map(convert_to_24hrs, sched_time.split(' - '))
         if start <= new_start < end:
             return sched_course  # Conflict found
         elif start < new_end <= end:
