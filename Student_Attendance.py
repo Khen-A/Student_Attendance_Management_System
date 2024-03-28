@@ -74,7 +74,7 @@ cursor = connection.cursor()
 
 # Creating Student_info table and column if not exist
 cursor.execute("CREATE TABLE IF NOT EXISTS Student_Info ("
-               "Student_No  ANY UNIQUE PRIMARY KEY, "
+               "Student_No   TEXT UNIQUE PRIMARY KEY, "
                "_Name        TEXT, "
                "_Department  TEXT, "
                "_Degree      TEXT, "
@@ -83,17 +83,19 @@ cursor.execute("CREATE TABLE IF NOT EXISTS Student_Info ("
 
 # Creating another ClassSchedule table and column
 cursor.execute("CREATE TABLE IF NOT EXISTS ClassSchedule ("
-               "Student_No  ANY, "
-               "_Course     TEXT, "
-               "_Day         Text, "
+               "Student_No   TEXT, "
+               "_Course      TEXT, "
+               "_Day         TEXT, "
                "_Time        TEXT)")
 
-# Creating another attendance table and column
+# Creating another Attendance table and column
 cursor.execute("CREATE TABLE IF NOT EXISTS Attendance ("
-               "Student_No  ANY, "
-               "_Course    TEXT, "
+               "Student_No   TEXT, "
+               "_Course      TEXT, "
+               "_Day         TEXT, "
                "_Time        TEXT, "
                "_Date        TEXT, "
+               "_TimeIn      TEXT, "
                "_Status      ANY)")
 
 # Saving all inquiries
@@ -225,13 +227,18 @@ def main():
         break
 
 
-def add_student(no, name, department, degree, level, signature):
+def add_student(stud_no, name, department, degree, level, signature):
     cursor.execute("INSERT INTO Student_Info VALUES (?, ?, ?, ?, ?, ?)",
-                   (no, name, department, degree, level, signature))
+                   (stud_no, name, department, degree, level, signature))
 
 
 def add_schedule(test):
     cursor.executemany("INSERT INTO ClassSchedule VALUES (?, ?, ?, ?)", test)
+
+
+def attendance(stud_no, course, time, date, time_in, status):
+    cursor.execute("INSERT INTO Attendance VALUES (?, ?, ?, ?, ?, ?)",
+                   (stud_no, course, time, date, time_in, status))
 
 
 def check_attendance():
@@ -254,9 +261,10 @@ def check_attendance():
             cursor.execute("SELECT * FROM ClassSchedule WHERE Student_No = ? AND _Day = ?", (stud_no, current_day,))
             sched = cursor.fetchall()
             if sched:
+                attendance(stud_no, sched[1], )
                 for sch in sched:
-                    print(f"      Course     : {sch[1]}\n")
-                    print(f"      Time       : {sch[3]}\n")
+                    print(f"      Course      : {sch[1]}\n")
+                    print(f"      Time        : {sch[3]}\n")
             os.system("pause")
     else:
         while True:
