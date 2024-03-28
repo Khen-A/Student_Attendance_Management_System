@@ -17,10 +17,11 @@ import time
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 schedule = []
 
+
 class text:
     none = "\033[0m"
-    class color:
 
+    class color:
         class foreground:
             black = "\033[30m"
             red = "\033[31m"
@@ -64,6 +65,7 @@ class text:
         reverse = "\033[7m"
         not_reverse = "\033[27m"
 
+
 # Setting up connection with SAData.db file
 connection = sqlite3.connect('SAData.db')
 
@@ -73,26 +75,26 @@ cursor = connection.cursor()
 # Creating Student_info table and column if not exist
 cursor.execute("CREATE TABLE IF NOT EXISTS Student_Info ("
                "Student_No  ANY UNIQUE PRIMARY KEY, "
-               "Name        TEXT, "
-               "Department  TEXT, "
-               "Degree      TEXT, "
-               "Level       TEXT, "
-               "Signature   TEXT)")
+               "_Name        TEXT, "
+               "_Department  TEXT, "
+               "_Degree      TEXT, "
+               "_Level       TEXT, "
+               "_Signature   TEXT)")
 
 # Creating another ClassSchedule table and column
 cursor.execute("CREATE TABLE IF NOT EXISTS ClassSchedule ("
                "Student_No  ANY, "
-               "Course     TEXT, "
-               "Day         Text, "
-               "Time        TEXT)")
+               "_Course     TEXT, "
+               "_Day         Text, "
+               "_Time        TEXT)")
 
 # Creating another attendance table and column
 cursor.execute("CREATE TABLE IF NOT EXISTS Attendance ("
                "Student_No  ANY, "
-               "Course     TEXT, "
-               "Time        TEXT, "
-               "Date        TEXT, "
-               "Status      ANY)")
+               "_Course    TEXT, "
+               "_Time        TEXT, "
+               "_Date        TEXT, "
+               "_Status      ANY)")
 
 # Saving all inquiries
 connection.commit()
@@ -137,6 +139,7 @@ def set_console_size(width: int, height: int):
     # Define necessary constants
     GWL_STYLE = -16
     WS_SIZEBOX = 0x00040000
+    WS_MAXIMIZEBOX = 0x00010000
 
     # Get handle to the console window
     hwnd = ctypes.windll.kernel32.GetConsoleWindow()
@@ -145,6 +148,7 @@ def set_console_size(width: int, height: int):
     if hwnd != 0:
         style = ctypes.windll.user32.GetWindowLongW(hwnd, GWL_STYLE)
         style &= ~WS_SIZEBOX
+        style &= ~WS_MAXIMIZEBOX
         ctypes.windll.user32.SetWindowLongW(hwnd, GWL_STYLE, style)
 
 
@@ -234,9 +238,9 @@ def check_attendance():
     tab_title("Check attendance")
     print("   Student Details")
     print("   ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
-    student_no = str(not_empty_input("      Student No. : "))
+    stud_no = str(not_empty_input("      Student No. : "))
 
-    cursor.execute("SELECT * FROM Student_Info WHERE Student_No = ?", (student_no,))
+    cursor.execute("SELECT * FROM Student_Info WHERE Student_No = ?", (stud_no,))
     data = cursor.fetchall()
 
     if data:
@@ -245,6 +249,14 @@ def check_attendance():
                   f"      Department  : {val[2]}\n"
                   f"      Degree      : {val[3]}\n"
                   f"      Level       : {val[4]}")
+
+            current_day = datetime.datetime.now().date().strftime("%A")
+            cursor.execute("SELECT * FROM ClassSchedule WHERE Student_No = ? AND _Day = ?", (stud_no, current_day,))
+            sched = cursor.fetchall()
+            if sched:
+                for sch in sched:
+                    print(f"      Course     : {sch[1]}\n")
+                    print(f"      Time       : {sch[3]}\n")
             os.system("pause")
     else:
         while True:
@@ -294,10 +306,13 @@ def convert_to_24Hrs(time_str):
     return hour * 60 + minute
 
 
-def check_conflict(schedules, time):
-    new_start, new_end = map(convert_to_24Hrs, time.split('-'))
+def check_conflict(schedules, day, time):
+    new_start, new_end = map(convert_to_24Hrs, time.split(' - '))
 
     for index, (stud_no, sched_course, sched_day, sched_time) in enumerate(schedules):
+        if sched_day != day:
+            continue
+
         start, end = map(convert_to_24Hrs, sched_time.split(' - '))
         if start <= new_start < end:
             return sched_course  # Conflict found
@@ -334,7 +349,7 @@ def add_course(stud_no, sched_day):
                 if msg:
                     clear(4)
 
-        conflict = check_conflict(schedule, sched_time)
+        conflict = check_conflict(schedule, sched_day, sched_time)
         if conflict is None:
             schedule.append((stud_no, sched_course, sched_day, sched_time))
             num += 1
@@ -352,7 +367,7 @@ def register_new_student():
     while True:
         stud_no = str(not_empty_input("      Student No. : "))
 
-        cursor.execute("SELECT * FROM Student_Info WHERE Student_No = ?", (stud_no,))
+        cursor.execute(f"SELECT * FROM Student_Info WHERE Student_No = {stud_no}")
         data = cursor.fetchall()
         if data:
             msg = input_key("\n   MSG: Student already registered. Press[M] to modify schedule. ")
