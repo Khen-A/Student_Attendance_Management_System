@@ -187,7 +187,11 @@ def limit_input(__prompt, __length):
         if msvcrt.kbhit():
             char = msvcrt.getch()  # Get a keypress
             if char == b'\r':  # Enter key pressed
-                break
+                if not input_str:
+                    print("\r", end="")
+                    print(__prompt, end="", flush=True)
+                else:
+                    break
             elif char == b'\x08':  # Backspace key pressed
                 if len(input_str) == cursor_position > 0:  # For deleting within the maximum text length
                     # Clear the character in input_str
@@ -298,16 +302,14 @@ def student():
     print("│                                             │".center(90))
     print("╰─────────────────────────────────────────────╯\n".center(90))
 
-    print("\033[4F", end="")
+    print("\033[5F", end="")
     while True:
-        print("│                  ‾‾‾‾‾‾‾‾‾‾‾‾‾              │".center(90))
-        print("\033[2F", end="")
         stud_no = str(limit_input(f"{"":<21}│    Student No. : ", 8))
         if not stud_no:
-            print("\033[2E", end="")
-            clear(1)
+            print("\r", end="")
             continue
-        break
+        else:
+            break
 
     cursor.execute("SELECT * FROM Student_Info WHERE Student_No = ?", (stud_no,))
     _student = cursor.fetchall()
@@ -321,11 +323,11 @@ def student():
         print(f"│    {"[1] Check again":<41}│".center(90))
         print(f"│    {"[2] Register new student":<41}│".center(90))
         print(f"│    {"[3] Modify Class Schedule":<41}│".center(90))
-        print(f"│    {"[3] Modify Student Details":<41}│".center(90))
+        print(f"│    {"[4] Modify Student Details":<41}│".center(90))
         print(f"│    {"[0] Exit":<41}│".center(90))
         print(f"│ {"":<44}│".center(90))
         print("\033[2E", end="")
-        print(f"{"":<22}MSG: Student currently not enrolled!!!")
+        print(f"{"":<21}MSG: Student currently not enrolled!!!")
         print("\033[3F", end="")
         while True:
             print(f"│ {"":<44}│".center(90))
@@ -356,13 +358,14 @@ def _details(_student):
     stud_degree = _student[3]
     stud_level = _student[4]
 
-    print(f"   ┆{"":<82}┆")
-    print(f"   ┆  Name        : {stud_name:<66}┆")
-    print(f"   ┆  Department  : {stud_department:<66}┆")
-    print(f"   ┆  Degree      : {stud_degree:<66}┆")
-    print(f"   ┆  Level       : {stud_level:<66}┆")
-    print(f"   ┆{"":<82}┆")
-    print(f"   └" + "–" * 82 + "┘")
+    print(f"┆  {Text.Style.Underline + "Student Details:" + Text.NONE:<91}┆".center(98))
+    print(f"┆{"":<85}┆".center(90))
+    print(f"┆    Name        : {stud_name:<67}┆".center(90))
+    print(f"┆    Department  : {stud_department:<67}┆".center(90))
+    print(f"┆    Degree      : {stud_degree:<67}┆".center(90))
+    print(f"┆    Level       : {stud_level:<67}┆".center(90))
+    print(f"┆{"":<85}┆".center(90))
+    print((f"└" + "–" * 85 + "┘").center(90))
 
 
 def check_attendance():
@@ -585,8 +588,9 @@ def check_attendance():
             print(f"│{"No Schedule":^45}│".center(90))
             print("└─────────────────────────────────────────────┘\n".center(90))
     while True:
-        print("[N] Check Again              [Y] Exit".center(90))
-        user = input_key("      Choice: ")
+        print("\n")
+        print(("-" * 80).center(90))
+        user = input_key("      Press [N] to check again or [Y] to exit: ")
         match user.upper():
             case "N":
                 clear(100)
@@ -641,110 +645,200 @@ def check_conflict(schedules, day, time):
 
 
 def add_course(stud_no, sched_day):
+    print(("├" + "─" * 40 + "┤").center(90))
+    print(("│" + " " * 40 + "│").center(90))
+    print(("│" + " " * 40 + "│").center(90))
+    print(("│" + " " * 40 + "│").center(90))
+    print(("│" + " " * 40 + "│").center(90))
+    print(("│" + " " * 40 + "│").center(90))
+    print(("│" + " " * 40 + "│").center(90))
+    print(("╰" + "─" * 40 + "╯").center(90))
+    print("\033[7F", end="")
+    print(f"{"":<24}│ ► {sched_day}")
+    print("\033[2E", end="")
     while True:
         try:
-            total_course = int(input("         Total course: "))
-            break
+            total_course = int(input_key(f"{"":<24}│     Total course MAX(6): "))
+            if total_course <= 6:
+                print("\033[3E", end="")
+                clear(4)
+                print(("│" + " " * 40 + "│").center(90))
+                break
+            else:
+                print("\r", end="")
+                print("\033[1F", end="")
         except ValueError:
-            clear(1)
-            pass
+            print("\r", end="")
+            print("\033[1F", end="")
+
+    print("\033[5F")
+    print(f"{"":<24}│ ► {sched_day} [{total_course}]")
 
     num = 0
     while num < total_course:
-        print("         --------------------")
+        print(f"│{"-" * 36:^40}│".center(90))
+        print(f"│{"   Course Title :":<40}│".center(90))
+        print(f"│{"   Time         :":<40}│".center(90))
+        print(("│" + " " * 40 + "│").center(90))
+        print(("╰" + "─" * 40 + "╯").center(90))
 
-        sched_course = str(not_empty_input("         course\t: "))
-
+        print("\033[4F", end="")
+        sched_course = str(limit_input(f"{"":<24}│   Course Title : ", 19))
+        print("\033[1E", end="")
         while True:
-            sched_time = str(not_empty_input("         Time\t: ").upper())
+            print(("│" + " " * 40 + "│").center(90))
+            print(("│" + " " * 40 + "│").center(90))
+            print(("╰" + "─" * 40 + "╯").center(90))
+            print("\033[3F", end="")
+
+            sched_time = str(limit_input(f"{"":<24}│   Time         : ", 19).upper())
             if validate_time_format(sched_time):
-                break
+                start, end = map(convert_to_24hrs, sched_time.split(' - '))
+                if (end - start) > 0:
+                    break
+                else:
+                    print("\033[3E", end="")
+                    msg = input_key(f"{"":<24}MSG: Wrong time schedule. ")
+                    if msg:
+                        clear(4)
             else:
-                msg = input_key("\n      MSG: Invalid time format."
-                                "\n           Please follow the format: 10:00 AM - 12:00 PM")
+                print("\033[3E", end="")
+                msg = input_key(f"{"":<19}MSG: Invalid time format.\n"
+                                f"{"":<19}     Please follow the format: 10:00 AM - 12:00 PM ")
                 if msg:
-                    clear(4)
+                    clear(5)
 
         conflict = check_conflict(schedule, sched_day, sched_time)
         if conflict is None:
             schedule.append((stud_no, sched_course, sched_day, sched_time))
             num += 1
+            print("\033[1E", end="")
         else:
-            msg = input_key(f"\n      MSG: conflict schedule with {conflict.upper()}. ")
+            print("\033[3E", end="")
+            msg = input_key(f"{"":<24}MSG: conflict schedule with {conflict.upper()}. ")
             if msg:
-                clear(5)
+                clear(6)
+
+    print("\033[2E", end="")
+    clear((num * 2) + 5)
 
 
 def register_new_student():
     tab_title("REGISTER NEW STUDENT")
-    print("   Student Details")
-    print("   ‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
+    print(("╭" + "─" * 84 + "╮").center(90))
+    print(f"│{"STUDENT DETAILS:":^84}│".center(90))
+    print(("├" + "─" * 84 + "┤").center(90))
+    print(("│" + " " * 84 + "│").center(90))
+    print(f"│  {"Student No.: ":<82}│".center(90))
+    print(f"│  {"Name       : ":<82}│".center(90))
+    print(f"│  {"Department : ":<82}│".center(90))
+    print(f"│  {"Degree     : ":<82}│".center(90))
+    print(f"│  {"Year Level : ":<82}│".center(90))
+    print(f"│  {"Signature  : ":<82}│".center(90))
+    print(("│" + " " * 84 + "│").center(90))
+    print(("╰" + "─" * 84 + "╯").center(90))
 
-    stud_no = str(not_empty_input("      Student No. : "))
+    print("\033[8F", end="")
+    while True:
+        stud_no = str(limit_input(f"  │  Student No.: ", 8))
+        if not stud_no:
+            print("\r", end="")
+            continue
+        else:
+            break
 
     cursor.execute(f"SELECT Student_No FROM Student_Info WHERE Student_No = ?", (stud_no,))
     data = cursor.fetchone()
-    if data:
+
+    days_of_week = None
+    if not data:
+        print("\033[1E", end="")
+        stud_name = str(limit_input(f"  │  Name       : ", 67))
+        print("\033[1E", end="")
+        stud_department = str(limit_input(f"  │  Department : ", 67))
+        print("\033[1E", end="")
+        stud_degree = str(limit_input(f"  │  Degree     : ", 67))
+        print("\033[1E", end="")
+        stud_level = str(limit_input(f"  │  Year Level : ", 67))
+        print("\033[1E", end="")
+        stud_signature = str(limit_input(f"  │  Signature  : ", 67))
+
+        print("\033[3E", end="")
+        print(("╭" + "─" * 40 + "╮").center(90))
+        print(f"│{"CLASS SCHEDULE:":^40}│".center(90))
+        print(("├" + "─" * 40 + "┤").center(90))
+        print(("│" + " " * 40 + "│").center(90))
+        print(("│" + " " * 40 + "│").center(90))
+        print(("│" + " " * 40 + "│").center(90))
+        print(("│" + " " * 40 + "│").center(90))
+        print(("│" + " " * 40 + "│").center(90))
+        print(("│" + " " * 40 + "│").center(90))
+        print(("╰" + "─" * 40 + "╯").center(90))
+
+        print("\033[7F", end="")
+        print(f"{"":<24}│  Option:")
+        print(f"{"":<24}│     [1] Weekdays only")
+        print(f"{"":<24}│     [2] Include weekends")
+        print(f"{"":<24}│     [0] Return to Home\n")
+
         while True:
-            print("\n   MSG: Student already registered.")
-            key = input_key("Press[M] to modify schedule or [N] to cancel.")
-            if key == "0":
-                clear(3)
-            else:
-                continue
-    else:
-        stud_name = str(not_empty_input("      Name        : ").upper())
-        stud_department = str(not_empty_input("      Department  : ").title())
-        stud_degree = str(not_empty_input("      Degree      : ").title())
-        stud_level = str(not_empty_input("      Year Level  : "))
-        stud_signature = str(not_empty_input("      Signature   : "))
-
-        print("\n   Class Schedule")
-        print("   ‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
-        while True:
-            print("   Option:")
-            print("      [1] Weekdays only")
-            print("      [2] Include weekends")
-            print("      [0] Return to Home\n")
-
-            choice1 = input_key("   Choice: ")
-
-            days_of_week = None
+            choice1 = input_key(f"{"":<24}│  Choice: ")
             match choice1:
                 case "0":
                     clear(100)
                     student()
-                    break
                 case "1":
                     clear(8)
                     days_of_week = "Weekdays only"
-                    print(f"   Class Schedule [{days_of_week}]")
-                    print("   ‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
+                    print(f"│{f"CLASS SCHEDULE [{days_of_week}]":^40}│".center(90))
                 case "2":
                     clear(8)
                     days_of_week = "Include weekends"
-                    print(f"   Class Schedule [{days_of_week}]")
-                    print("   ‾‾‾‾‾‾‾‾‾‾‾‾‾‾")
+                    print(f"│{f"CLASS SCHEDULE [{days_of_week}]":^40}│".center(90))
                 case _:
-                    clear(6)
+                    print("\033[1F", end="")
+                    print("\r", end="")
                     continue
             break
 
         while True:
             if days_of_week == "Weekdays only":
                 for day in days[:5]:
-                    print(f"      ► {day}")
                     add_course(stud_no, day)
                 break
             if days_of_week == "Include weekends":
                 for day in days:
-                    print(f"      ► {day}")
                     add_course(stud_no, day)
                 break
 
         add_student(stud_no, stud_name, stud_department, stud_degree, stud_level, stud_signature)
         add_schedule(schedule)
         connection.commit()
+    else:
+        print("\033[8E", end="")
+        print("  MSG: Student already registered.\n")
+        print(("-" * 86).center(90))
+        print(f"{"":<13}[S] Modify Schedule                      [C] Check Attendance")
+        print(f"{"":<13}[D] Modify Student Details               [N] Register Again\n")
+        while True:
+            key = input_key("  Press[Y] to exit.: ")
+            match key.upper():
+                case "S":
+                    pass
+                case "D":
+                    pass
+                case "C":
+                    clear(100)
+                    check_attendance()
+                    break
+                case "N":
+                    clear(100)
+                    register_new_student()
+                    break
+                case "Y":
+                    exit()
+                case _:
+                    clear(1)
 
 
 if __name__ == "__main__":
