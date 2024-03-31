@@ -841,7 +841,6 @@ def register_new_student():
                     clear(1)
 
 
-
 if __name__ == "__main__":
     run_as_administrator()
     set_console_title("Student Attendance Management System")
