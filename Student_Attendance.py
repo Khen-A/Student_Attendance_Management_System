@@ -287,10 +287,9 @@ def attendance(attdnt):
     cursor.executemany("INSERT INTO Attendance VALUES (?, ?, ?, ?, ?, ?, ?)", attdnt)
 
 
-def student():
+def student(__usage):
     global student_details
     student_details.clear()
-    tab_title("Student Attendance")
     print("\n" * 9)
     print("╭─────────────────────────────────────────────╮".center(90))
     print(f"│{"STUDENT":^45}│".center(90))
@@ -300,56 +299,112 @@ def student():
     print("│                                             │".center(90))
     print("│                                             │".center(90))
     print("│                                             │".center(90))
-    print("╰─────────────────────────────────────────────╯\n".center(90))
+    print("╰─────────────────────────────────────────────╯".center(90))
 
-    print("\033[5F", end="")
+    stud_no = ""
+    print("\033[4F", end="")
+    if __usage == "Modify Schedule" or __usage == "Modify Student Details":
+        print("\033[1E", end="")
+        print(f"│    {"Signature   :":<41}│".center(90))
+        print("\033[3F", end="")
+
     while True:
         stud_no = str(limit_input(f"{"":<21}│    Student No. : ", 8))
-        if not stud_no:
+        if stud_no:
+            if __usage == "Modify Schedule" or __usage == "Modify Student Details":
+                print("\033[1F", end="")
+            else:
+                print("\033[2F", end="")
+            break
+        else:
             print("\r", end="")
             continue
-        else:
-            break
 
     cursor.execute("SELECT * FROM Student_Info WHERE Student_No = ?", (stud_no,))
     _student = cursor.fetchall()
     if _student:
-        print("\033[5E", end="")
-        clear(100)
         student_details = [x for item in _student for x in item[0:6]]
+        if not __usage == "Modify Schedule" and not __usage == "Modify Student Details":
+            print("\033[10E", end="")
+            clear(100)
+            return
+        elif not __usage == "Modify Student Details" and not __usage == "Modify Schedule":
+            print("\033[10E", end="")
+            clear(100)
+            return
     else:
-        print("\033[2F", end="")
         print(f"│  {"OPTION:":<43}│".center(90))
-        print(f"│    {"[1] Check again":<41}│".center(90))
-        print(f"│    {"[2] Register new student":<41}│".center(90))
-        print(f"│    {"[3] Modify Class Schedule":<41}│".center(90))
-        print(f"│    {"[4] Modify Student Details":<41}│".center(90))
+        if __usage == "Modify Schedule" or __usage == "Modify Student Details":
+            print(f"│    {"[1] Check Attendance":<41}│".center(90))
+            print(f"│    {"[2] Register New Student":<41}│".center(90))
+            if __usage == "Modify Schedule":
+                print(f"│    {"[3] Modify Student Details":<41}│".center(90))
+            elif __usage == "Modify Student Details":
+                print(f"│    {"[3] Modify Schedule":<41}│".center(90))
+            print(f"│    {"[4] Modify Again":<41}│".center(90))
+        else:
+            print(f"│    {"[1] Check Again":<41}│".center(90))
+            print(f"│    {"[2] Register New Student":<41}│".center(90))
+            print(f"│    {"[3] Modify Class Schedule":<41}│".center(90))
+            print(f"│    {"[4] Modify Student Details":<41}│".center(90))
         print(f"│    {"[0] Exit":<41}│".center(90))
-        print(f"│ {"":<44}│".center(90))
-        print("\033[2E", end="")
-        print(f"{"":<21}MSG: Student currently not enrolled!!!")
+        print(f"│{"":<45}│".center(90))
+        print(f"│{"":<45}│".center(90))
+        print(f"╰{"─"*45}╯".center(90))
+        print(f"MSG: Student currently not enrolled!!!".center(90))
         print("\033[3F", end="")
+
         while True:
-            print(f"│ {"":<44}│".center(90))
-            print("╰─────────────────────────────────────────────╯".center(90))
-            print("\033[2F", end="")
             choice = input_key(f"{"":<21}│  Choice: ")
             match choice:
                 case "1":
                     print("\033[3E", end="")
                     clear(100)
                     check_attendance()
-                    break
                 case "2":
                     print("\033[3E", end="")
                     clear(100)
                     register_new_student()
-                    break
+                case "3":
+                    print("\033[3E", end="")
+                    clear(100)
+                    if __usage == "Modify Schedule":
+                        modify_student_details()
+                    elif __usage == "Modify Student Details":
+                        modify_schedule()
+                    else:
+                        modify_schedule()
+                case "4":
+                    print("\033[3E", end="")
+                    clear(100)
+                    if __usage == "Modify Schedule":
+                        modify_schedule()
+                    if __usage == "Modify Student Details":
+                        modify_student_details()
+                    else:
+                        modify_student_details()
                 case "0":
                     exit()
                 case _:
-                    clear(1)
+                    print("\033[1F", end="")
                     continue
+            break
+
+    print("\033[3E", end="")
+    while True:
+        print(f"│{"":^45}│".center(90))
+        print("\033[1F", end="")
+        key_signature = str(limit_input(f"{"":<21}│    Signature   : ", 25))
+        if key_signature == student_details[5]:
+            print("\033[10E", end="")
+            clear(100)
+            return
+        else:
+            print("\033[3E", end="")
+            print("MSG: Wrong signature.Try again".center(90))
+            print("\033[3F", end="")
+            clear(1)
+            continue
 
 
 def _details(_student):
@@ -375,12 +430,14 @@ def check_attendance():
     today_next_schedule_found = False
     schedule.clear()
 
-    student()
+    tab_title("CHECK ATTENDANCE")
+
+    student("Check Attendance")
+
+    tab_title("CHECK ATTENDANCE")
 
     stud_no = student_details[0]
     stud_signature = student_details[5]
-
-    tab_title("CHECK ATTENDANCE")
 
     _details(student_details)
 
@@ -451,7 +508,7 @@ def check_attendance():
                     print("│                                             │".center(90))
                     print("└─────────────────────────────────────────────┘".center(90))
                     print("\033[2F", end="")
-                    key_signature = input(f"{"":<21}│ Signature: ")
+                    key_signature = str(limit_input(f"{"":<21}│ Signature: ", 25))
                     if key_signature == "":
                         clear(1)
                     else:
@@ -587,9 +644,10 @@ def check_attendance():
             print("├─────────────────────────────────────────────┤".center(90))
             print(f"│{"No Schedule":^45}│".center(90))
             print("└─────────────────────────────────────────────┘\n".center(90))
+
+    print("\n")
+    print(("-" * 80).center(90))
     while True:
-        print("\n")
-        print(("-" * 80).center(90))
         user = input_key("      Press [N] to check again or [Y] to exit: ")
         match user.upper():
             case "N":
@@ -598,7 +656,8 @@ def check_attendance():
                 break
             case "Y":
                 exit()
-        clear(2)
+            case _:
+                print("\033[1F", end="")
 
 
 def validate_time_format(time):
@@ -760,7 +819,7 @@ def register_new_student():
         print("\033[1E", end="")
         stud_level = str(limit_input(f"  │  Year Level : ", 67))
         print("\033[1E", end="")
-        stud_signature = str(limit_input(f"  │  Signature  : ", 67))
+        stud_signature = str(limit_input(f"  │  Signature  : ", 25))
 
         print("\033[3E", end="")
         print(("╭" + "─" * 40 + "╮").center(90))
@@ -785,7 +844,7 @@ def register_new_student():
             match choice1:
                 case "0":
                     clear(100)
-                    student()
+                    student("Check Attendance")
                 case "1":
                     clear(8)
                     days_of_week = "Weekdays only"
@@ -817,29 +876,66 @@ def register_new_student():
         connection.commit()
     else:
         print("\033[8E", end="")
-        print("  MSG: Student already registered.\n")
-        print(("-" * 86).center(90))
-        print(f"{"":<13}[S] Modify Schedule                      [C] Check Attendance")
-        print(f"{"":<13}[D] Modify Student Details               [N] Register Again\n")
+        print("  MSG: Student already registered.")
+        print("\033[10F", end="")
+        print(f"│  {"OPTION:":<82}│".center(90))
+        print(f"│  {"   [1] Check Attendance":<82}│".center(90))
+        print(f"│  {"   [2] Modify Schedule":<82}│".center(90))
+        print(f"│  {"   [3] Modify Student Details":<82}│".center(90))
+        print(f"│  {"   [4] Register Again":<82}│".center(90))
+        print(f"│  {"   [0] Exit":<82}│".center(90))
+        print(("│" + " " * 84 + "│").center(90))
         while True:
-            key = input_key("  Press[Y] to exit.: ")
+            key = input_key(f"  │  Choice: ")
             match key.upper():
-                case "S":
-                    pass
-                case "D":
-                    pass
-                case "C":
+                case "1":
+                    print("\033[5E", end="")
                     clear(100)
                     check_attendance()
-                    break
-                case "N":
+                case "2":
+                    print("\033[5E", end="")
+                    clear(100)
+                    modify_schedule()
+                case "3":
+                    print("\033[5E", end="")
+                    clear(100)
+                    modify_student_details()
+                case "4":
+                    print("\033[5E", end="")
                     clear(100)
                     register_new_student()
-                    break
-                case "Y":
+                case "0":
                     exit()
                 case _:
-                    clear(1)
+                    print("\033[1F", end="")
+                    continue
+            break
+
+
+def modify_student_details():
+    tab_title("MODIFY STUDENT DETAILS")
+
+    student("Modify Student Details")
+
+    tab_title("MODIFY STUDENT DETAILS")
+
+    msg = input_key("Currently not available... ")
+    if msg:
+        clear(100)
+        check_attendance()
+
+
+def modify_schedule():
+    tab_title("MODIFY SCHEDULE")
+
+    student("Modify Schedule")
+
+    tab_title("MODIFY SCHEDULE")
+
+    msg = input_key("Currently not available... ")
+    if msg:
+        clear(100)
+        check_attendance()
 
 
 if __name__ == "__main__":
