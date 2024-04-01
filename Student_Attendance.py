@@ -645,7 +645,6 @@ def check_conflict(schedules, day, time):
 
 
 def add_course(stud_no, sched_day):
-    print(("├" + "─" * 40 + "┤").center(90))
     print(("│" + " " * 40 + "│").center(90))
     print(("│" + " " * 40 + "│").center(90))
     print(("│" + " " * 40 + "│").center(90))
@@ -720,7 +719,7 @@ def add_course(stud_no, sched_day):
                 clear(6)
 
     print("\033[2E", end="")
-    clear((num * 2) + 5)
+    clear((3 * num) + 3)
 
 
 def register_new_student():
@@ -801,6 +800,8 @@ def register_new_student():
                     continue
             break
 
+        print(("├" + "─" * 40 + "┤").center(90), end="")
+        print("\033[1E", end="")
         while True:
             if days_of_week == "Weekdays only":
                 for day in days[:5]:
