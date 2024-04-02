@@ -413,14 +413,14 @@ def _details(_student):
     stud_degree = _student[3]
     stud_level = _student[4]
 
-    print(f"┆  {Text.Style.Underline + "Student Details:" + Text.NONE:<91}┆".center(98))
-    print(f"┆{"":<85}┆".center(90))
-    print(f"┆    Name        : {stud_name:<67}┆".center(90))
-    print(f"┆    Department  : {stud_department:<67}┆".center(90))
-    print(f"┆    Degree      : {stud_degree:<67}┆".center(90))
-    print(f"┆    Level       : {stud_level:<67}┆".center(90))
-    print(f"┆{"":<85}┆".center(90))
-    print((f"└" + "–" * 85 + "┘").center(90))
+    print(f"┆  {Text.Style.Underline + "Student Details:" + Text.NONE:<92}┆".center(98))
+    print(f"┆{"":<86}┆".center(90))
+    print(f"┆    Name        : {stud_name:<68}┆".center(90))
+    print(f"┆    Department  : {stud_department:<68}┆".center(90))
+    print(f"┆    Degree      : {stud_degree:<68}┆".center(90))
+    print(f"┆    Level       : {stud_level:<68}┆".center(90))
+    print(f"┆{"":<86}┆".center(90))
+    print((f"└" + "–" * 86 + "┘").center(90))
 
 
 def check_attendance():
@@ -551,12 +551,17 @@ def check_attendance():
 
                 # Storing attendance log to _attendance variable for using it to display
                 _attendance = attendance_log
+
                 if max_entry == 0:
                     print("\033[2E", end="")
                     clear(9)
                 else:
-                    print("\033[1E", end="")
+                    print("\033[2E", end="")
                     clear(9)
+
+                print("\033[f", end="")
+                tab_title("CHECK ATTENDANCE")
+                print("\033[8E", end="")
         else:
             # Displaying attendance
             for log in _attendance:
