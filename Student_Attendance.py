@@ -510,7 +510,7 @@ def check_attendance():
                     print("\033[2F", end="")
                     key_signature = str(limit_input(f"{"":<21}│ Signature: ", 25))
                     if key_signature == "":
-                        clear(1)
+                        print("\r")
                     else:
                         if key_signature == stud_signature:
                             status = "PRESENT"
@@ -519,11 +519,15 @@ def check_attendance():
                             print("\033[3E", end="")
                             if max_entry > 2:
                                 print(f"{"":<21}MSG: Wrong signature. You have {max_entry - 1} attempt(s) left.")
-                                print("\033[5F", end="")
+                                print("\033[2F", end="")
+                                clear(1)
+                                print("\033[1F", end="")
                             else:
                                 print(f"{"":<21}MSG: Wrong signature. You have {max_entry - 1} attempt(s) left.")
                                 print(f"{"":<21}     Otherwise, You will be marked as ABSENT. ")
-                                print("\033[6F", end="")
+                                print("\033[3F", end="")
+                                clear(1)
+                                print("\033[1F", end="")
                             max_entry -= 1
 
                             if max_entry == 0:
