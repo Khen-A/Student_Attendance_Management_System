@@ -15,6 +15,7 @@ import re
 student_details = []
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 schedule = []
+columns = int
 
 
 class Text:
@@ -80,14 +81,14 @@ cursor.execute("CREATE TABLE IF NOT EXISTS Student_Info ("
                "_Level       TEXT, "
                "_Signature   TEXT)")
 
-# Creating another ClassSchedule table and column
+# Creating ClassSchedule table and column
 cursor.execute("CREATE TABLE IF NOT EXISTS ClassSchedule ("
                "Student_No   TEXT, "
                "_Course      TEXT, "
                "_Day         TEXT, "
                "_Time        TEXT)")
 
-# Creating another Attendance table and column
+# Creating Attendance table and column
 cursor.execute("CREATE TABLE IF NOT EXISTS Attendance ("
                "Student_No   TEXT, "
                "_Course      TEXT, "
@@ -137,6 +138,8 @@ def set_console_title(title):
 def set_console_size(width: int, height: int):
     os.system(f"mode con cols={width} lines={height}")
 
+
+def set_window_style():
     # Define necessary constants
     gwl_style = -16
     ws_sizebox = 0x00040000
@@ -253,6 +256,7 @@ def limit_input(__prompt, __length):
                 input_str += char.decode('utf-8')  # Decode bytes to string
                 print(input_str[-1], end='', flush=True)  # Print the character
                 cursor_position += 1
+
     return input_str
 
 
@@ -263,14 +267,14 @@ def tab_title(title):
     # Get the current time
     current_time = datetime.datetime.now().time().strftime("%I:%M %p")
     print(Text.Color.Foreground.Green, end="")
-    print("╔════════════════════════════════════════════════════════════════════════════════════════╗".center(90))
-    print(("║" + Text.Color.Foreground.Yellow + Text.Style.Bold + f"{title:^88}" +
-           Text.NONE + Text.Color.Foreground.Green + "║").center(90))
-    print((Text.Color.Foreground.Green + "║" + Text.Color.Foreground.Light_Cyan +
-           f" {f"{current_date}" + f"{"":<48}" + f"{current_time}":^86} " +
-           Text.Color.Foreground.Green + "║").center(90))
+    print(("╔" + "═" * int(columns - 2) + "╗").center(columns))
+    print(("║" + Text.Color.Foreground.Yellow + Text.Style.Bold + f"{title:^{columns-2}}" +
+           Text.NONE + Text.Color.Foreground.Green + "║").center(columns + 10))
+    print(("║" + Text.Color.Foreground.Light_Cyan + f"{current_date + " " * int(columns - 40) + 
+                                                       current_time:^{columns - 2}}"
+           + Text.Color.Foreground.Green + "║").center(columns + 10))
     print(Text.Color.Foreground.Green, end="")
-    print("╚════════════════════════════════════════════════════════════════════════════════════════╝".center(90))
+    print(("╚" + "═" * int(columns - 2) + "╝").center(columns))
     print(Text.NONE, end="")
 
 
@@ -291,21 +295,20 @@ def student(__usage):
     global student_details
     student_details.clear()
     print("\n" * 9)
-    print("╭─────────────────────────────────────────────╮".center(90))
-    print(f"│{"STUDENT":^45}│".center(90))
-    print("├─────────────────────────────────────────────┤".center(90))
-    print("│                                             │".center(90))
-    print("│                                             │".center(90))
-    print("│                                             │".center(90))
-    print("│                                             │".center(90))
-    print("│                                             │".center(90))
-    print("╰─────────────────────────────────────────────╯".center(90))
+    print("╭─────────────────────────────────────────────╮".center(columns))
+    print(f"│{"STUDENT":^45}│".center(columns))
+    print("├─────────────────────────────────────────────┤".center(columns))
+    print("│                                             │".center(columns))
+    print("│                                             │".center(columns))
+    print("│                                             │".center(columns))
+    print("│                                             │".center(columns))
+    print("│                                             │".center(columns))
+    print("╰─────────────────────────────────────────────╯".center(columns))
 
-    stud_no = ""
     print("\033[4F", end="")
     if __usage == "Modify Schedule" or __usage == "Modify Student Details":
         print("\033[1E", end="")
-        print(f"│    {"Signature   :":<41}│".center(90))
+        print(f"│    {"Signature   :":<41}│".center(columns))
         print("\033[3F", end="")
 
     while True:
@@ -333,25 +336,25 @@ def student(__usage):
             clear(100)
             return
     else:
-        print(f"│  {"OPTION:":<43}│".center(90))
+        print(f"│  {"OPTION:":<43}│".center(columns))
         if __usage == "Modify Schedule" or __usage == "Modify Student Details":
-            print(f"│    {"[1] Check Attendance":<41}│".center(90))
-            print(f"│    {"[2] Register New Student":<41}│".center(90))
+            print(f"│    {"[1] Check Attendance":<41}│".center(columns))
+            print(f"│    {"[2] Register New Student":<41}│".center(columns))
             if __usage == "Modify Schedule":
-                print(f"│    {"[3] Modify Student Details":<41}│".center(90))
+                print(f"│    {"[3] Modify Student Details":<41}│".center(columns))
             elif __usage == "Modify Student Details":
-                print(f"│    {"[3] Modify Schedule":<41}│".center(90))
-            print(f"│    {"[4] Modify Again":<41}│".center(90))
+                print(f"│    {"[3] Modify Schedule":<41}│".center(columns))
+            print(f"│    {"[4] Modify Again":<41}│".center(columns))
         else:
-            print(f"│    {"[1] Check Again":<41}│".center(90))
-            print(f"│    {"[2] Register New Student":<41}│".center(90))
-            print(f"│    {"[3] Modify Class Schedule":<41}│".center(90))
-            print(f"│    {"[4] Modify Student Details":<41}│".center(90))
-        print(f"│    {"[0] Exit":<41}│".center(90))
-        print(f"│{"":<45}│".center(90))
-        print(f"│{"":<45}│".center(90))
-        print(f"╰{"─"*45}╯".center(90))
-        print(f"MSG: Student currently not enrolled!!!".center(90))
+            print(f"│    {"[1] Check Again":<41}│".center(columns))
+            print(f"│    {"[2] Register New Student":<41}│".center(columns))
+            print(f"│    {"[3] Modify Class Schedule":<41}│".center(columns))
+            print(f"│    {"[4] Modify Student Details":<41}│".center(columns))
+        print(f"│    {"[0] Exit":<41}│".center(columns))
+        print(f"│{"":<45}│".center(columns))
+        print(f"│{"":<45}│".center(columns))
+        print(f"╰{"─" * 45}╯".center(columns))
+        print(f"MSG: Student currently not enrolled!!!".center(columns))
         print("\033[3F", end="")
 
         while True:
@@ -392,7 +395,7 @@ def student(__usage):
 
     print("\033[3E", end="")
     while True:
-        print(f"│{"":^45}│".center(90))
+        print(f"│{"":^45}│".center(columns))
         print("\033[1F", end="")
         key_signature = str(limit_input(f"{"":<21}│    Signature   : ", 25))
         if key_signature == student_details[5]:
@@ -401,7 +404,7 @@ def student(__usage):
             return
         else:
             print("\033[3E", end="")
-            print("MSG: Wrong signature.Try again".center(90))
+            print("MSG: Wrong signature.Try again".center(columns))
             print("\033[3F", end="")
             clear(1)
             continue
@@ -414,13 +417,13 @@ def _details(_student):
     stud_level = _student[4]
 
     print(f"┆  {Text.Style.Underline + "Student Details:" + Text.NONE:<92}┆".center(98))
-    print(f"┆{"":<86}┆".center(90))
-    print(f"┆    Name        : {stud_name:<68}┆".center(90))
-    print(f"┆    Department  : {stud_department:<68}┆".center(90))
-    print(f"┆    Degree      : {stud_degree:<68}┆".center(90))
-    print(f"┆    Level       : {stud_level:<68}┆".center(90))
-    print(f"┆{"":<86}┆".center(90))
-    print((f"└" + "–" * 86 + "┘").center(90))
+    print(f"┆{"":<86}┆".center(columns))
+    print(f"┆    Name        : {stud_name:<68}┆".center(columns))
+    print(f"┆    Department  : {stud_department:<68}┆".center(columns))
+    print(f"┆    Degree      : {stud_degree:<68}┆".center(columns))
+    print(f"┆    Level       : {stud_level:<68}┆".center(columns))
+    print(f"┆{"":<86}┆".center(columns))
+    print((f"└" + "–" * 86 + "┘").center(columns))
 
 
 def check_attendance():
@@ -441,6 +444,7 @@ def check_attendance():
 
     _details(student_details)
 
+    # Getting current date and time
     current_date = datetime.datetime.now().date().strftime("%m/%d/%y")
     current_day = datetime.datetime.now().date().strftime("%A")
     current_time = datetime.datetime.now().time().strftime("%I:%M %p")
@@ -448,9 +452,10 @@ def check_attendance():
     if current_time.startswith("0"):
         current_time = current_time[1:]
 
+    # Searching for today class schedule in class schedule database
     cursor.execute("SELECT * FROM ClassSchedule WHERE Student_No = ? AND _Day = ?",
                    (stud_no, current_day,))
-    schedule.extend(cursor.fetchall())
+    schedule.extend(cursor.fetchall())  # Store all search class schedule
 
     # Checking for current schedule
     for index, (stud_no, course, day, time) in enumerate(schedule):
@@ -460,13 +465,15 @@ def check_attendance():
         end_time = convert_to_24hrs(end_time)
         time_now = convert_to_24hrs(current_time)
 
-        if end_time <= time_now:  # if the schedule already skip, the status will be marked as absent.
-            # Store the schedule to attendance log
+        # if the current time already skip the schedule time, the status will be marked as absent.
+        if end_time <= time_now:
+            # Searching for skip schedule
             cursor.execute("SELECT * FROM Attendance WHERE Student_No = ? AND _Course = ? "
                            "AND _Day = ? AND _Time = ? AND _Date = ?",
                            (stud_no, course, day, time, current_date))
-            attn_log = cursor.fetchall()
+            attn_log = cursor.fetchall()  # Store the search schedule
             if not attn_log:
+                # Store the schedule to attendance log
                 attendance_log.append((stud_no, course, day, time, current_date, "N/A", "ABSENT"))
                 attendance(attendance_log)
                 connection.commit()
@@ -485,35 +492,36 @@ def check_attendance():
             break
 
     # Checking now for attendance
+    _attendance = []
     for attn, (stud_no, course, day, time, current_date, current_time) in enumerate(attendance_log):
+        # Searching for current attendance in attendance
         cursor.execute("SELECT * FROM Attendance WHERE Student_No = ? AND _Course = ? "
                        "AND _Day = ? AND _Time = ? AND _Date = ?",
                        (stud_no, course, day, time, current_date))
-        _attendance = cursor.fetchall()
+        _attendance = cursor.fetchall()  # Store all search schedule
 
         # If it is not already signed, it will ask user to input their signature.
         while not _attendance:
-            max_entry = 3   # Allow user to input only 3 attempts for their signature.
+            max_entry = 3  # Allow user to input only 3 attempts for their signature.
             for attn_log in attendance_log:
-                print("┌─────────────────────────────────────────────┐".center(90))
-                print(f"│{"SCHEDULE NOW":^45}│".center(90))
-                print("├─────────────────────────────────────────────┤".center(90))
-                print(f"│ Course Title : {attn_log[1]:<29}│".center(90))
-                print(f"│ Time         : {attn_log[3]:<29}│".center(90))
-                print(f"│ Status       : {status:<29}│".center(90))
-                print("├─────────────────────────────────────────────┤".center(90))
+                print("┌─────────────────────────────────────────────┐".center(columns))
+                print(f"│{"SCHEDULE NOW":^45}│".center(columns))
+                print("├─────────────────────────────────────────────┤".center(columns))
+                print(f"│ Course Title : {attn_log[1]:<29}│".center(columns))
+                print(f"│ Time         : {attn_log[3]:<29}│".center(columns))
+                print(f"│ Status       : {status:<29}│".center(columns))
+                print("├─────────────────────────────────────────────┤".center(columns))
 
                 # If user reach all attempts their attendance will be marked as absent
                 while max_entry > 0:
-                    print("│                                             │".center(90))
-                    print("└─────────────────────────────────────────────┘".center(90))
+                    print("│                                             │".center(columns))
+                    print("└─────────────────────────────────────────────┘".center(columns))
                     print("\033[2F", end="")
                     key_signature = str(limit_input(f"{"":<21}│ Signature: ", 25))
                     if key_signature == "":
                         print("\r")
                     else:
                         if key_signature == stud_signature:
-                            status = "PRESENT"
                             break
                         else:
                             print("\033[3E", end="")
@@ -530,14 +538,25 @@ def check_attendance():
                                 print("\033[1F", end="")
                             max_entry -= 1
 
-                            if max_entry == 0:
-                                status = "ABSENT"
-                                break
-
-                # Preparing for queuing their attendance
+                # Preparing for queuing the attendance
                 attendance_log.clear()
-                current_time = datetime.datetime.now().time().strftime("%I:%M %p")
 
+                # Splitting and converting time into real number
+                current_time = datetime.datetime.now().time().strftime("%I:%M %p")
+                start_time, end_time = map(convert_to_24hrs, attn_log[3].split(" - "))
+                time_now = convert_to_24hrs(current_time)
+
+                # Condition for Present, Absent, and Late
+                if max_entry == 0:
+                    status = "ABSENT"
+                elif 5 <= (time_now - start_time) <= 15:
+                    status = "LATE"
+                elif (time_now - start_time) > 15:
+                    status = "ABSENT"
+                else:
+                    status = "PRESENT"
+
+                # Removing the starting 0 in hour
                 if current_time.startswith("0"):
                     current_time = current_time[1:]
 
@@ -552,6 +571,7 @@ def check_attendance():
                 # Storing attendance log to _attendance variable for using it to display
                 _attendance = attendance_log
 
+                # Clearing and updating console display
                 if max_entry == 0:
                     print("\033[2E", end="")
                     clear(9)
@@ -562,19 +582,8 @@ def check_attendance():
                 print("\033[f", end="")
                 tab_title("CHECK ATTENDANCE")
                 print("\033[8E", end="")
-        else:
-            # Displaying attendance
-            for log in _attendance:
-                print("┌─────────────────────────────────────────────┐".center(90))
-                print(f"│{"SCHEDULE NOW":^45}│".center(90))
-                print("├─────────────────────────────────────────────┤".center(90))
-                print(f"│ Course Title : {log[1]:<29}│".center(90))
-                print(f"│ Time         : {log[3]:<29}│".center(90))
-                print(f"│ Status       : {log[6]:<29}│".center(90))
-                print(f"│ Time In      : {log[5]:<29}│".center(90))
-                print("└─────────────────────────────────────────────┘\n".center(90))
 
-    # Searching again for next schedule if there's no schedule now
+    # Searching again for next
     if not today_next_schedule_found:
         for index, (stud_no, course, day, time) in enumerate(schedule):
             next_start_time, next_end_time = time.split(" - ")
@@ -588,74 +597,80 @@ def check_attendance():
                 today_next_schedule_found = True
                 break
 
-    # If next schedule found we will be display
+    # Displaying attendance and next schedule if next schedule found
     if today_next_schedule_found:
-        print("┌─────────────────────────────────────────────┐".center(90))
-        print(f"│{"NEXT SCHEDULE":^45}│".center(90))
-        print("├─────────────────────────────────────────────┤".center(90))
+        print("┌─────────────────────────────────────────────┐".center(columns))
+        print(f"│{"SCHEDULE NOW":^45}│".center(columns))
+        print("├─────────────────────────────────────────────┤".center(columns))
+        if _attendance:
+            for log in _attendance:
+                print(f"│ Course Title : {log[1]:<29}│".center(columns))
+                print(f"│ Time         : {log[3]:<29}│".center(columns))
+                print(f"│ Status       : {log[6]:<29}│".center(columns))
+                print(f"│ Time In      : {log[5]:<29}│".center(columns))
+        else:
+            print(f"│{"NO SCHEDULE":^45}│".center(columns))
+        print("└─────────────────────────────────────────────┘\n".center(columns))
+
+        print("┌─────────────────────────────────────────────┐".center(columns))
+        print(f"│{"NEXT SCHEDULE":^45}│".center(columns))
+        print("├─────────────────────────────────────────────┤".center(columns))
         for x in next_schedule:
-            print(f"│ Course Title : {x[1]:<29}│".center(90))
-            print(f"│ Time         : {x[3]:<29}│".center(90))
-            print("└─────────────────────────────────────────────┘".center(90))
+            print(f"│ Course Title : {x[1]:<29}│".center(columns))
+            print(f"│ Time         : {x[3]:<29}│".center(columns))
+            print("└─────────────────────────────────────────────┘".center(columns))
     else:  # Else if there's no next schedule found. It will display all schedules within the day.
         # If it has schedule today
         if not attendance_log:
+            print("┌───────────────────────────────────────────────────────────────────────┐".center(columns))
+            print(f"│{"SCHEDULE TODAY":^71}│".center(columns))
+            print("├───────────────────┬───────────────────────┬────────────┬──────────────┤".center(columns))
+            print((f"│{"COURSE TITLE":^19}".ljust(19) + f"│{"TIME":^23}".ljust(23) +
+                   f"│{"STATUS":^12}".ljust(12) + f"│{"TIME IN":^14}".ljust(14) + "│").center(columns))
             if schedule:
-                print("┌───────────────────────────────────────────────────────────────────────┐".center(90))
-                print(f"│{"SCHEDULE TODAY":^71}│".center(90))
-                print("├───────────────────┬───────────────────────┬────────────┬──────────────┤".center(90))
-                print((f"│{"COURSE TITLE":^19}".ljust(19) + f"│{"TIME":^23}".ljust(23) +
-                       f"│{"STATUS":^12}".ljust(12) + f"│{"TIME IN":^14}".ljust(14) + "│").center(90))
                 print("├───────────────────┼───────────────────────┼────────────┼──────────────┤"
-                      .center(90))
+                      .center(columns))
                 for attn, (stud_no, course, day, time) in enumerate(schedule):
+                    # Searching for all attendance in attendance database
                     cursor.execute("SELECT * FROM Attendance WHERE Student_No = ? AND _Course = ? "
                                    "AND _Day = ? AND _Time = ? AND _Date = ?",
                                    (stud_no, course, day, time, current_date))
-                    _attendance = cursor.fetchall()
+                    _attendance = cursor.fetchall()  # Store all search schedule
                     if _attendance:
                         for log in _attendance:
                             print((f"│ {log[1]}".ljust(20) + f"│ {log[3]}".ljust(24) +
-                                   f"│{log[6]:^12}".ljust(12) + f"│{log[5]:^14}".ljust(14) + "│").center(90))
+                                   f"│{log[6]:^12}".ljust(12) + f"│{log[5]:^14}".ljust(14) + "│").center(columns))
                 print("└───────────────────┴───────────────────────┴────────────┴──────────────┘"
-                      .center(90))
+                      .center(columns))
             else:
-                print("┌───────────────────────────────────────────────────────────────────────┐".center(90))
-                print(f"│{"SCHEDULE TODAY":^71}│".center(90))
-                print("├───────────────────┬───────────────────────┬────────────┬──────────────┤".center(90))
-                print((f"│{"COURSE TITLE":^19}".ljust(19) + f"│{"TIME":^23}".ljust(23) +
-                       f"│{"STATUS":^12}".ljust(12) + f"│{"TIME IN":^14}".ljust(14) + "│").center(90))
-                print("├───────────────────┴───────────────────────┴────────────┴──────────────┤".center(90))
-                print(f"│{"No Schedule":^71}│".center(90))
-                print("└───────────────────────────────────────────────────────────────────────┘".center(90))
+                print("├───────────────────┴───────────────────────┴────────────┴──────────────┤".center(columns))
+                print(f"│{"No Schedule":^71}│".center(columns))
+                print("└───────────────────────────────────────────────────────────────────────┘".center(columns))
 
         next_day = (days.index(current_day) + 1) % len(days)
         next_day = days[next_day]
 
-        # Searching for next day schedule
+        # Searching for next day schedule in class schedule database
         cursor.execute("SELECT * FROM ClassSchedule WHERE Student_No = ? AND _Day = ?",
                        (stud_no, next_day,))
-        next_day_sched = cursor.fetchall()
+        next_day_sched = cursor.fetchall()  # Store all search schedule
 
         # If it has next day schedule it will display all schedules.
+        print("┌─────────────────────────────────────────────┐".center(columns))
+        print(f"│{"NEXT SCHEDULE " + f"[{next_day.upper()}]":^45}│".center(columns))
+        print("├─────────────────────────────────────────────┤".center(columns))
         if next_day_sched:
-            print("┌─────────────────────────────────────────────┐".center(90))
-            print(f"│{"NEXT SCHEDULE " + f"[{next_day.upper()}]":^45}│".center(90))
-            for sched in next_day_sched:
-                print("├─────────────────────────────────────────────┤".center(90))
-                print(f"│ Course Title : {sched[1]:<29}│".center(90))
-                print(f"│ Time         : {sched[3]:<29}│".center(90))
-
-            print("└─────────────────────────────────────────────┘\n".center(90))
+            for idx, sched in enumerate(next_day_sched):
+                print(f"│  Course Title : {sched[1]:<28}│".center(columns))
+                print(f"│  Time         : {sched[3]:<28}│".center(columns))
+                if idx < len(next_day_sched) - 1:
+                    print(f"│{"-" * 40:^45}│".center(columns))
         else:
-            print("┌─────────────────────────────────────────────┐".center(90))
-            print(f"│{"NEXT SCHEDULE " + f"[{next_day.upper()}]":^45}│".center(90))
-            print("├─────────────────────────────────────────────┤".center(90))
-            print(f"│{"No Schedule":^45}│".center(90))
-            print("└─────────────────────────────────────────────┘\n".center(90))
+            print(f"│{"No Schedule":^45}│".center(columns))
+        print("└─────────────────────────────────────────────┘".center(columns))
 
-    print("\n")
-    print(("-" * 80).center(90))
+    print("\n\n")
+    print(("-" * 80).center(columns))
     while True:
         user = input_key("      Press [N] to check again or [Y] to exit: ")
         match user.upper():
@@ -713,13 +728,13 @@ def check_conflict(schedules, day, time):
 
 
 def add_course(stud_no, sched_day):
-    print(("│" + " " * 40 + "│").center(90))
-    print(("│" + " " * 40 + "│").center(90))
-    print(("│" + " " * 40 + "│").center(90))
-    print(("│" + " " * 40 + "│").center(90))
-    print(("│" + " " * 40 + "│").center(90))
-    print(("│" + " " * 40 + "│").center(90))
-    print(("╰" + "─" * 40 + "╯").center(90))
+    print(("│" + " " * 40 + "│").center(columns))
+    print(("│" + " " * 40 + "│").center(columns))
+    print(("│" + " " * 40 + "│").center(columns))
+    print(("│" + " " * 40 + "│").center(columns))
+    print(("│" + " " * 40 + "│").center(columns))
+    print(("│" + " " * 40 + "│").center(columns))
+    print(("╰" + "─" * 40 + "╯").center(columns))
     print("\033[7F", end="")
     print(f"{"":<24}│ ► {sched_day}")
     print("\033[2E", end="")
@@ -729,7 +744,7 @@ def add_course(stud_no, sched_day):
             if total_course <= 6:
                 print("\033[3E", end="")
                 clear(4)
-                print(("│" + " " * 40 + "│").center(90))
+                print(("│" + " " * 40 + "│").center(columns))
                 break
             else:
                 print("\r", end="")
@@ -743,19 +758,19 @@ def add_course(stud_no, sched_day):
 
     num = 0
     while num < total_course:
-        print(f"│{"-" * 36:^40}│".center(90))
-        print(f"│{"   Course Title :":<40}│".center(90))
-        print(f"│{"   Time         :":<40}│".center(90))
-        print(("│" + " " * 40 + "│").center(90))
-        print(("╰" + "─" * 40 + "╯").center(90))
+        print(f"│{"-" * 36:^40}│".center(columns))
+        print(f"│{"   Course Title :":<40}│".center(columns))
+        print(f"│{"   Time         :":<40}│".center(columns))
+        print(("│" + " " * 40 + "│").center(columns))
+        print(("╰" + "─" * 40 + "╯").center(columns))
 
         print("\033[4F", end="")
         sched_course = str(limit_input(f"{"":<24}│   Course Title : ", 19))
         print("\033[1E", end="")
         while True:
-            print(("│" + " " * 40 + "│").center(90))
-            print(("│" + " " * 40 + "│").center(90))
-            print(("╰" + "─" * 40 + "╯").center(90))
+            print(("│" + " " * 40 + "│").center(columns))
+            print(("│" + " " * 40 + "│").center(columns))
+            print(("╰" + "─" * 40 + "╯").center(columns))
             print("\033[3F", end="")
 
             sched_time = str(limit_input(f"{"":<24}│   Time         : ", 19).upper())
@@ -792,18 +807,21 @@ def add_course(stud_no, sched_day):
 
 def register_new_student():
     tab_title("REGISTER NEW STUDENT")
-    print(("╭" + "─" * 84 + "╮").center(90))
-    print(f"│{"STUDENT DETAILS:":^84}│".center(90))
-    print(("├" + "─" * 84 + "┤").center(90))
-    print(("│" + " " * 84 + "│").center(90))
-    print(f"│  {"Student No.: ":<82}│".center(90))
-    print(f"│  {"Name       : ":<82}│".center(90))
-    print(f"│  {"Department : ":<82}│".center(90))
-    print(f"│  {"Degree     : ":<82}│".center(90))
-    print(f"│  {"Year Level : ":<82}│".center(90))
-    print(f"│  {"Signature  : ":<82}│".center(90))
-    print(("│" + " " * 84 + "│").center(90))
-    print(("╰" + "─" * 84 + "╯").center(90))
+    global student_details
+    global schedule
+    global columns
+    print(("╭" + "─" * 84 + "╮").center(columns))
+    print(f"│{"STUDENT DETAILS:":^84}│".center(columns))
+    print(("├" + "─" * 84 + "┤").center(columns))
+    print(("│" + " " * 84 + "│").center(columns))
+    print(f"│  {"Student No.: ":<82}│".center(columns))
+    print(f"│  {"Name       : ":<82}│".center(columns))
+    print(f"│  {"Department : ":<82}│".center(columns))
+    print(f"│  {"Degree     : ":<82}│".center(columns))
+    print(f"│  {"Year Level : ":<82}│".center(columns))
+    print(f"│  {"Signature  : ":<82}│".center(columns))
+    print(("│" + " " * 84 + "│").center(columns))
+    print(("╰" + "─" * 84 + "╯").center(columns))
 
     print("\033[8F", end="")
     while True:
@@ -831,16 +849,16 @@ def register_new_student():
         stud_signature = str(limit_input(f"  │  Signature  : ", 25))
 
         print("\033[3E", end="")
-        print(("╭" + "─" * 40 + "╮").center(90))
-        print(f"│{"CLASS SCHEDULE:":^40}│".center(90))
-        print(("├" + "─" * 40 + "┤").center(90))
-        print(("│" + " " * 40 + "│").center(90))
-        print(("│" + " " * 40 + "│").center(90))
-        print(("│" + " " * 40 + "│").center(90))
-        print(("│" + " " * 40 + "│").center(90))
-        print(("│" + " " * 40 + "│").center(90))
-        print(("│" + " " * 40 + "│").center(90))
-        print(("╰" + "─" * 40 + "╯").center(90))
+        print(("╭" + "─" * 40 + "╮").center(columns))
+        print(f"│{"CLASS SCHEDULE:":^40}│".center(columns))
+        print(("├" + "─" * 40 + "┤").center(columns))
+        print(("│" + " " * 40 + "│").center(columns))
+        print(("│" + " " * 40 + "│").center(columns))
+        print(("│" + " " * 40 + "│").center(columns))
+        print(("│" + " " * 40 + "│").center(columns))
+        print(("│" + " " * 40 + "│").center(columns))
+        print(("│" + " " * 40 + "│").center(columns))
+        print(("╰" + "─" * 40 + "╯").center(columns))
 
         print("\033[7F", end="")
         print(f"{"":<24}│  Option:")
@@ -857,18 +875,18 @@ def register_new_student():
                 case "1":
                     clear(8)
                     days_of_week = "Weekdays only"
-                    print(f"│{f"CLASS SCHEDULE [{days_of_week}]":^40}│".center(90))
+                    print(f"│{f"CLASS SCHEDULE [{days_of_week}]":^40}│".center(columns))
                 case "2":
                     clear(8)
                     days_of_week = "Include weekends"
-                    print(f"│{f"CLASS SCHEDULE [{days_of_week}]":^40}│".center(90))
+                    print(f"│{f"CLASS SCHEDULE [{days_of_week}]":^40}│".center(columns))
                 case _:
                     print("\033[1F", end="")
                     print("\r", end="")
                     continue
             break
 
-        print(("├" + "─" * 40 + "┤").center(90), end="")
+        print(("├" + "─" * 40 + "┤").center(columns), end="")
         print("\033[1E", end="")
         while True:
             if days_of_week == "Weekdays only":
@@ -880,20 +898,108 @@ def register_new_student():
                     add_course(stud_no, day)
                 break
 
-        add_student(stud_no, stud_name, stud_department, stud_degree, stud_level, stud_signature)
-        add_schedule(schedule)
-        connection.commit()
+        schedule1 = sorted(schedule, key=sort_time)
+        stud = [stud_no, stud_name, stud_department, stud_degree, stud_level, stud_signature]
+
+        max_count = 0
+        if schedule1:
+            day_counts = {}  # Dictionary to store counts of schedules for each day
+
+            for entry in schedule1:
+                day = entry[2]  # Get the day from the entry
+                if day in day_counts:
+                    day_counts[day] += 1  # Increment the count for this day
+                else:
+                    day_counts[day] = 1  # Initialize the count for this day
+
+            # Find the day with the maximum count of schedules
+            max_day = max(day_counts, key=day_counts.get)
+            max_count = day_counts[max_day]
+
+        if max_count == 6:
+            os.system(f"mode con cols={120} lines={53}")
+        else:
+            os.system(f"mode con cols={120} lines={45}")
+
+        center_console_window()
+        columns = os.get_terminal_size().columns
+        clear(100)
+        tab_title("REGISTER NEW STUDENT")
+        print(("╭" + "─" * 84 + "╮").center(columns))
+        print(f"│{"STUDENT DETAILS:":^84}│".center(columns))
+        print(("├" + "─" * 84 + "┤").center(columns))
+        print(("│" + " " * 84 + "│").center(columns))
+        print(f"│  Student No.: {stud[0]:<69}│".center(columns))
+        print(f"│  Name       : {stud[1]:<69}│".center(columns))
+        print(f"│  Department : {stud[2]:<69}│".center(columns))
+        print(f"│  Degree     : {stud[3]:<69}│".center(columns))
+        print(f"│  Year Level : {stud[4]:<69}│".center(columns))
+        print(f"│  Signature  : {stud[5]:<69}│".center(columns))
+        print(("│" + " " * 84 + "│").center(columns))
+        print(("╰" + "─" * 84 + "╯").center(columns))
+
+        class_schedule(schedule1)
+        if schedule1:
+            print("\n")
+            print(("-" * int(columns - 4)).center(columns))
+            print(f"[S] Modify Schedule{"":<26}[D] Modify Student Details\n".center(columns))
+            while True:
+                option = input_key(f"{"":<5}Are you sure you want to save? Press [Y] to save. ")
+                match option.upper():
+                    case "S":
+                        modify_schedule()
+                    case "D":
+                        modify_schedule()
+                    case "Y":
+                        # add_student(stud[0], stud[1], stud[2], stud[3], stud[4], stud[5])
+                        # add_schedule(schedule1)
+                        # connection.commit()
+                        break
+                    case _:
+                        clear(1)
+
+            os.system(f"mode con cols={90} lines={45}")
+            center_console_window()
+            columns = os.get_terminal_size().columns
+            clear(100)
+            print("\033[23E", end="")
+            print("MSG: Student successfully registered".center(columns))
+            print("\033[f", end="")
+            student_details.clear()
+            schedule.clear()
+            check_attendance()
+
+        else:
+            print(f"{"":5}NOTE: We see that there's no schedule.\n")
+            print(("-" * int(columns - 4)).center(columns))
+            print(f"[S] Modify Schedule{"":<26}[D] Modify Student Details\n".center(columns))
+            while True:
+                option = input_key(f"{"":<5}Press [N] to register again. ")
+                match option.upper():
+                    case "S":
+                        modify_schedule()
+                    case "D":
+                        modify_student_details()
+                    case "N":
+                        clear(100)
+                        os.system(f"mode con cols={90} lines={45}")
+                        center_console_window()
+                        columns = os.get_terminal_size().columns
+                        register_new_student()
+                    case _:
+                        clear(1)
+
     else:
         print("\033[8E", end="")
         print("  MSG: Student already registered.")
         print("\033[10F", end="")
-        print(f"│  {"OPTION:":<82}│".center(90))
-        print(f"│  {"   [1] Check Attendance":<82}│".center(90))
-        print(f"│  {"   [2] Modify Schedule":<82}│".center(90))
-        print(f"│  {"   [3] Modify Student Details":<82}│".center(90))
-        print(f"│  {"   [4] Register Again":<82}│".center(90))
-        print(f"│  {"   [0] Exit":<82}│".center(90))
-        print(("│" + " " * 84 + "│").center(90))
+        print(f"│  {"OPTION:":<82}│".center(columns))
+        print(f"│  {"   [1] Check Attendance":<82}│".center(columns))
+        print(f"│  {"   [2] Modify Schedule":<82}│".center(columns))
+        print(f"│  {"   [3] Modify Student Details":<82}│".center(columns))
+        print(f"│  {"   [4] Register Again":<82}│".center(columns))
+        print(f"│  {"   [0] Exit":<82}│".center(columns))
+        print(("│" + " " * 84 + "│").center(columns))
         while True:
             key = input_key(f"  │  Choice: ")
             match key.upper():
@@ -919,6 +1025,67 @@ def register_new_student():
                     print("\033[1F", end="")
                     continue
             break
+
+
+def sort_time(schedule_item):
+    day_str, time_str = schedule_item[2], schedule_item[3]
+    return datetime.datetime.strptime(day_str + " " + time_str.split(" - ")[0], "%A %I:%M %p")
+
+
+def class_schedule(__schedule):
+    # Group schedules by day
+    day_schedules = {}
+    # Display the table header
+    print(("╭" + "─" * 111 + "╮").center(columns))
+    print(f"│{"CLASS SCHEDULE":^111}│".center(columns))
+    print(
+        f"├{"─" * 15:^15}┬{"─" * 15:^15}┬{"─" * 15:^15}┬{"─" * 15:^15}┬{"─" * 15:^15}┬{"─" * 15:^15}┬{"─" * 15:^15}┤"
+        .center(columns))
+    print(
+        f"│{"MONDAY":^15}│{"TUESDAY":^15}│{"WEDNESDAY":^15}│{"THURSDAY":^15}│{"FRIDAY":^15}│{"SATURDAY":^15}│"
+        f"{"SUNDAY":^15}│".center(columns))
+    print(
+        f"├{"─" * 15:^15}┼{"─" * 15:^15}┼{"─" * 15:^15}┼{"─" * 15:^15}┼{"─" * 15:^15}┼{"─" * 15:^15}┼{"─" * 15:^15}┤"
+        .center(columns))
+
+    if __schedule:
+        for entry in __schedule:
+            day = entry[2]
+            if day not in day_schedules:
+                day_schedules[day] = []
+            day_schedules[day].append((entry[1], entry[3]))
+
+        # Get the maximum number of schedules for any day
+        max_schedules = max(len(schedules) for schedules in day_schedules.values())
+
+        # Display the schedules
+        for i in range(max_schedules):
+            day_schedule = []
+            for day in days:
+                if day in day_schedules and len(day_schedules[day]) > i:
+                    course, time = day_schedules[day][i]
+                    start, end = time.split(" - ")
+                    day_schedule.append((course, start, end))
+                else:
+                    day_schedule.append(("", "", ""))
+            print(f"│{day_schedule[0][0]:^15}│{day_schedule[1][0]:^15}│{day_schedule[2][0]:^15}"
+                  f"│{day_schedule[3][0]:^15}│{day_schedule[4][0]:^15}│{day_schedule[5][0]:^15}"
+                  f"│{day_schedule[6][0]:^15}│".center(columns))
+            print(f"│{day_schedule[0][1]:^15}│{day_schedule[1][1]:^15}│{day_schedule[2][1]:^15}"
+                  f"│{day_schedule[3][1]:^15}│{day_schedule[4][1]:^15}│{day_schedule[5][1]:^15}"
+                  f"│{day_schedule[6][1]:^15}│".center(columns))
+            print(f"│{day_schedule[0][2]:^15}│{day_schedule[1][2]:^15}│{day_schedule[2][2]:^15}"
+                  f"│{day_schedule[3][2]:^15}│{day_schedule[4][2]:^15}│{day_schedule[5][2]:^15}"
+                  f"│{day_schedule[6][2]:^15}│".center(columns))
+            if i < max_schedules - 1:
+                print(
+                    f"│{"-" * 15:^15}│{"-" * 15:^15}│{"-" * 15:^15}│{"-" * 15:^15}│{"-" * 15:^15}│{"-" * 15:^15}│"
+                    f"{"-" * 15:^15}│".center(columns))
+    else:
+        print(f"│{"":^15}│{"":^15}│{"":^15}│{"":^15}│{"":^15}│{"":^15}│{"":^15}│".center(columns))
+    print(
+        f"╰{"─" * 15:^15}┴{"─" * 15:^15}┴{"─" * 15:^15}┴{"─" * 15:^15}┴{"─" * 15:^15}┴{"─" * 15:^15}┴{"─" * 15:^15}╯"
+        .center(columns))
 
 
 def modify_student_details():
@@ -950,6 +1117,8 @@ def modify_schedule():
 if __name__ == "__main__":
     run_as_administrator()
     set_console_title("Student Attendance Management System")
+    set_window_style()
     set_console_size(90, 45)
+    columns = os.get_terminal_size().columns
     center_console_window()
     check_attendance()
