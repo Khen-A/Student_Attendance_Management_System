@@ -15,6 +15,7 @@ import re
 student_details = []
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 schedule = []
+char = ''
 columns = int
 
 
@@ -182,18 +183,16 @@ def not_empty_input(__prompt):
             clear(1)
 
 
-def limit_input(__prompt, __length):
-    print(__prompt, end='', flush=True)
+def limit_input(_prompt, _length):
+    print(_prompt, end='', flush=True)
     input_str = ""
     cursor_position = 0
+    global char
     while True:
         if msvcrt.kbhit():
             char = msvcrt.getch()  # Get a keypress
             if char == b'\r':  # Enter key pressed
-                if not input_str:
-                    print("\r", end="")
-                    print(__prompt, end="", flush=True)
-                else:
+                if input_str:
                     break
             elif char == b'\x08':  # Backspace key pressed
                 if len(input_str) == cursor_position > 0:  # For deleting within the maximum text length
@@ -212,7 +211,7 @@ def limit_input(__prompt, __length):
                     # Get the remaining text
                     remaining_text = input_str[cursor_position:] + ' ' * 1
                     # Clearing only the input display
-                    print('\r' + __prompt + input_str + ' ' * len(remaining_text) + '\b' *
+                    print('\r' + _prompt + input_str + ' ' * len(remaining_text) + '\b' *
                           len(remaining_text), end='', flush=True)
                     # Moving the cursor back to it's position
                     print('\033[D' * (chars_to_reprint + 1), end='', flush=True)
@@ -222,8 +221,6 @@ def limit_input(__prompt, __length):
             elif char == b'\xe0':  # Arrow key pressed (Allow user to move the cursor)
                 arrow = msvcrt.getch()  # Get the arrow character
                 if arrow == b'H':  # Up arrow key
-                    pass
-                elif arrow == b'P':  # Down arrow key
                     pass
                 elif arrow == b'K':  # Left arrow key
                     if cursor_position > 0:
@@ -235,7 +232,7 @@ def limit_input(__prompt, __length):
                         cursor_position += 1
 
             elif char == b' ':  # Space key pressed
-                if len(input_str) < __length:
+                if len(input_str) < _length:
                     input_str = input_str[:cursor_position] + ' ' + input_str[cursor_position:]
                     chars_to_reprint = len(input_str) - cursor_position
                     remaining_text = input_str[cursor_position:]  # Get the remaining text after inserting the character
@@ -243,20 +240,27 @@ def limit_input(__prompt, __length):
                     print('\033[D' * (chars_to_reprint - 1), end='', flush=True)  # Move cursor forward
                     cursor_position += 1
 
-            elif __length > len(input_str) > cursor_position:  # Allow user to input between text
-                # Inserting character between text in input_str
-                input_str = input_str[:cursor_position] + char.decode('utf-8') + input_str[cursor_position:]
-                chars_to_reprint = len(input_str) - cursor_position
-                remaining_text = input_str[cursor_position:]  # Get the remaining text after inserting the character
-                print(remaining_text, end='', flush=True)  # Print the character and remaining text
-                print('\033[D' * (chars_to_reprint - 1), end='', flush=True)  # Move cursor forward
-                cursor_position += 1
+            elif char == b'\t':
+                pass
 
-            elif cursor_position == len(input_str) < __length:
-                input_str += char.decode('utf-8')  # Decode bytes to string
-                print(input_str[-1], end='', flush=True)  # Print the character
-                cursor_position += 1
+            elif char == b'\x00':
+                next_char = msvcrt.getch()
+                if next_char:
+                    pass
 
+            elif char.isalpha() or char.isalnum() or char.isascii():
+                if _length > len(input_str) > cursor_position:  # Allow user to input between text
+                    # Inserting character between text in input_str
+                    input_str = input_str[:cursor_position] + char.decode('utf-8') + input_str[cursor_position:]
+                    chars_to_reprint = len(input_str) - cursor_position
+                    remaining_text = input_str[cursor_position:]  # Get the remaining text after inserting the character
+                    print(remaining_text, end='', flush=True)  # Print the character and remaining text
+                    print('\033[D' * (chars_to_reprint - 1), end='', flush=True)  # Move cursor forward
+                    cursor_position += 1
+                elif cursor_position == len(input_str) < _length:
+                    input_str += char.decode('utf-8')  # Decode bytes to string
+                    print(input_str[-1], end='', flush=True)  # Print the character
+                    cursor_position += 1
     return input_str
 
 
@@ -863,8 +867,7 @@ def register_new_student():
         print("\033[7F", end="")
         print(f"{"":<24}│  Option:")
         print(f"{"":<24}│     [1] Weekdays only")
-        print(f"{"":<24}│     [2] Include weekends")
-        print(f"{"":<24}│     [0] Return to Home\n")
+        print(f"{"":<24}│     [2] Include weekends\n\n")
 
         while True:
             choice1 = input_key(f"{"":<24}│  Choice: ")
@@ -947,13 +950,21 @@ def register_new_student():
                 option = input_key(f"{"":<5}Are you sure you want to save? Press [Y] to save. ")
                 match option.upper():
                     case "S":
+                        clear(100)
+                        os.system(f"mode con cols={90} lines={45}")
+                        center_console_window()
+                        columns = os.get_terminal_size().columns
                         modify_schedule()
                     case "D":
+                        clear(100)
+                        os.system(f"mode con cols={90} lines={45}")
+                        center_console_window()
+                        columns = os.get_terminal_size().columns
                         modify_schedule()
                     case "Y":
-                        # add_student(stud[0], stud[1], stud[2], stud[3], stud[4], stud[5])
-                        # add_schedule(schedule1)
-                        # connection.commit()
+                        add_student(stud[0], stud[1], stud[2], stud[3], stud[4], stud[5])
+                        add_schedule(schedule1)
+                        connection.commit()
                         break
                     case _:
                         clear(1)
@@ -977,8 +988,16 @@ def register_new_student():
                 option = input_key(f"{"":<5}Press [N] to register again. ")
                 match option.upper():
                     case "S":
+                        clear(100)
+                        os.system(f"mode con cols={90} lines={45}")
+                        center_console_window()
+                        columns = os.get_terminal_size().columns
                         modify_schedule()
                     case "D":
+                        clear(100)
+                        os.system(f"mode con cols={90} lines={45}")
+                        center_console_window()
+                        columns = os.get_terminal_size().columns
                         modify_student_details()
                     case "N":
                         clear(100)
