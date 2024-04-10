@@ -1266,6 +1266,11 @@ def modify_student_details():
 
 
 def update_course(stud_no, sched_day, current_total_course, day_to_modify):
+    global new_schedule
+    global current_str
+    new_schedule.clear()
+    num = 0
+
     print(("│" + " " * 40 + "│").center(columns))
     print(("│" + " " * 40 + "│").center(columns))
     print(("│" + " " * 40 + "│").center(columns))
@@ -1296,10 +1301,6 @@ def update_course(stud_no, sched_day, current_total_course, day_to_modify):
     print("\033[5E", end="")
     clear(9)
     print(f"│{f"{" ► " + sched_day} {[total_course]}":<40}│".center(columns))
-
-    num = 0
-    global new_schedule
-    global current_str
 
     for sched in day_to_modify:
         if num == total_course:
@@ -1401,11 +1402,18 @@ def update_course(stud_no, sched_day, current_total_course, day_to_modify):
 
 def modify_schedule():
     global columns
-    if not modifying_student_details:
+    global modifying_class_schedule
+
+    if not modifying_student_details and not modifying_class_schedule:
         tab_title("MODIFY SCHEDULE")
         student("Modify Schedule")
         tab_title("MODIFY SCHEDULE")
         _details(student_details)
+
+        cursor.execute("SELECT * FROM ClassSchedule WHERE Student_No = ?", (student_details[0],))
+        schedule.extend(cursor.fetchall())
+
+    stud_no = student_details[0]
 
     print(("╭" + "─" * 40 + "╮").center(columns))
     print(f"│{"CLASS SCHEDULE:":^40}│".center(columns))
@@ -1429,11 +1437,6 @@ def modify_schedule():
 
     _days.sort(key=lambda x: days.index(x))
 
-    stud_no = "23-57973"
-
-    cursor.execute("SELECT * FROM ClassSchedule WHERE Student_No = ?", (stud_no,))
-    schedule.extend(cursor.fetchall())
-
     print("\033[6F", end="")
     for _day in _days:
         _total = 0
@@ -1453,6 +1456,13 @@ def modify_schedule():
 
     new_schedule1 = sorted(new_schedule, key=sort_time)
     add_schedule(new_schedule1)
+
+    changes = False
+
+    for _schedule1 in schedule:
+        if _schedule1 not in new_schedule1:
+            changes = True
+            break
 
     max_count = 0
     if new_schedule1:
@@ -1479,23 +1489,24 @@ def modify_schedule():
     tab_title("MODIFY SCHEDULE")
     _details(student_details)
     class_schedule(new_schedule1)
-    print("\n")
+    modifying_class_schedule = True
+
+    if not changes:
+        print(f"{"":<5}NOTE: No changes have been made.")
+
+    print("\n", end="")
     print(("-" * int(columns - 4)).center(columns))
-    print(f"[N] Modify Again{"":<26}[D] Modify Student Details\n".center(columns))
+    print(f"[Y] Save{"":<26}[N] Modify Again\n".center(columns))
     while True:
-        key_pressed = input_key(f"{"":<5}Are you sure you want to save? Press [Y] to save. ")
+        key_pressed = input_key(f"{"":<5}Are you sure you want to save? ")
         match key_pressed.upper():
             case "N":
                 clear(100)
                 os.system(f"mode con cols={90} lines={45}")
-                center_console_window()
                 columns = os.get_terminal_size().columns
-                modify_schedule()
-            case "D":
-                clear(100)
-                os.system(f"mode con cols={90} lines={45}")
                 center_console_window()
-                columns = os.get_terminal_size().columns
+                tab_title("MODIFY SCHEDULE")
+                _details(student_details)
                 modify_schedule()
             case "Y":
                 # connection.commit()
