@@ -15,8 +15,10 @@ import re
 student_details = []
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 schedule = []
-char = ''
+current_str = ""
 columns = int
+modifying_student_details = False
+modifying_class_schedule = False
 
 
 class Text:
@@ -183,11 +185,12 @@ def not_empty_input(__prompt):
             clear(1)
 
 
-def limit_input(_prompt, _length):
+def limit_input(_prompt: str, _length: int):
     print(_prompt, end='', flush=True)
-    input_str = ""
-    cursor_position = 0
-    global char
+    global current_str
+    input_str = current_str
+    print(input_str, end='', flush=True)
+    cursor_position = len(input_str)
     while True:
         if msvcrt.kbhit():
             char = msvcrt.getch()  # Get a keypress
@@ -264,6 +267,50 @@ def limit_input(_prompt, _length):
     return input_str
 
 
+def int_input(_prompt: str, _range: int):
+    print(_prompt, end='', flush=True)
+    input_str = ""
+    cursor_position = len(input_str)
+    while True:
+        if msvcrt.kbhit():
+            char = msvcrt.getch()  # Get a keypress
+            if char == b'\r':  # Enter key pressed
+                if input_str:
+                    break
+
+            elif char == b'\x08':  # Backspace key pressed
+                if len(input_str) == cursor_position > 0:
+                    input_str = input_str[:cursor_position - 1] + input_str[cursor_position:]
+                    cursor_position -= 1
+                    print('\b \b', end='', flush=True)
+
+            elif char == b'\xe0':
+                arrow = msvcrt.getch()
+                if arrow:
+                    pass
+
+            elif char == b' ' or char == b'\t':
+                pass
+
+            elif char == b'\x00':
+                next_char = msvcrt.getch()
+                if next_char:
+                    pass
+
+            elif char.isalpha() or char.isascii() and not char.isalnum():
+                pass
+
+            elif char.isalnum():
+                if char.decode('utf-8') in input_str:
+                    pass
+                else:
+                    if char.decode('utf-8') in map(str, range(1, _range + 1)):
+                        input_str += char.decode('utf-8')  # Decode bytes to string
+                        print(input_str[-1], end='', flush=True)  # Print the character
+                        cursor_position += 1
+    return input_str
+
+
 def tab_title(title):
     # Get the current date
     current_date = datetime.datetime.now().date().strftime("%B %d, %Y | %A")
@@ -282,17 +329,21 @@ def tab_title(title):
     print(Text.NONE, end="")
 
 
-def add_student(stud_no, name, department, degree, level, signature):
-    cursor.execute("INSERT INTO Student_Info VALUES (?, ?, ?, ?, ?, ?)",
-                   (stud_no, name, department, degree, level, signature))
+def add_student(_student):
+    cursor.execute("INSERT INTO Student_Info VALUES (?, ?, ?, ?, ?, ?)", _student)
 
 
-def add_schedule(sched):
-    cursor.executemany("INSERT INTO ClassSchedule VALUES (?, ?, ?, ?)", sched)
+def add_schedule(_schedule):
+    cursor.executemany("INSERT INTO ClassSchedule VALUES (?, ?, ?, ?)", _schedule)
 
 
-def attendance(attdnt):
-    cursor.executemany("INSERT INTO Attendance VALUES (?, ?, ?, ?, ?, ?, ?)", attdnt)
+def update_student(_student):
+    cursor.execute("UPDATE Student_Info SET _Name = ?, _Department = ?, _Degree = ?, _Level = ?, _Signature = ? "
+                   "WHERE Student_No = ?", _student[1:] + [_student[0]])
+
+
+def attendance(_attendance):
+    cursor.executemany("INSERT INTO Attendance VALUES (?, ?, ?, ?, ?, ?, ?)", _attendance)
 
 
 def student(__usage):
@@ -842,11 +893,11 @@ def register_new_student():
     days_of_week = None
     if not data:
         print("\033[1E", end="")
-        stud_name = str(limit_input(f"  │  Name       : ", 67))
+        stud_name = str(limit_input(f"  │  Name       : ", 67).upper())
         print("\033[1E", end="")
-        stud_department = str(limit_input(f"  │  Department : ", 67))
+        stud_department = str(limit_input(f"  │  Department : ", 67).title())
         print("\033[1E", end="")
-        stud_degree = str(limit_input(f"  │  Degree     : ", 67))
+        stud_degree = str(limit_input(f"  │  Degree     : ", 67).title())
         print("\033[1E", end="")
         stud_level = str(limit_input(f"  │  Year Level : ", 67))
         print("\033[1E", end="")
@@ -962,7 +1013,8 @@ def register_new_student():
                         columns = os.get_terminal_size().columns
                         modify_schedule()
                     case "Y":
-                        add_student(stud[0], stud[1], stud[2], stud[3], stud[4], stud[5])
+                        student_details = [stud[0], stud[1], stud[2], stud[3], stud[4], stud[5]]
+                        add_student(student_details)
                         add_schedule(schedule1)
                         connection.commit()
                         break
@@ -1108,24 +1160,300 @@ def class_schedule(__schedule):
 
 
 def modify_student_details():
+    global student_details
+    global current_str
+    global modifying_student_details
+
+    if not modifying_student_details:
+        tab_title("MODIFY STUDENT DETAILS")
+        student("Modify Student Details")
+
     tab_title("MODIFY STUDENT DETAILS")
 
-    student("Modify Student Details")
+    stud_no = student_details[0]
+    stud_name = student_details[1]
+    stud_department = student_details[2]
+    stud_degree = student_details[3]
+    stud_level = student_details[4]
+    stud_signature = student_details[5]
 
-    tab_title("MODIFY STUDENT DETAILS")
+    print(("╭" + "─" * 84 + "╮").center(columns))
+    print(f"│{"STUDENT DETAILS:":^84}│".center(columns))
+    print(("├" + "─" * 84 + "┤").center(columns))
+    print(("│" + " " * 84 + "│").center(columns))
+    print(f"│  Student No.: {stud_no:<69}│".center(columns))
+    print(f"│  Name       : {stud_name:<69}│".center(columns))
+    print(f"│  Department : {stud_department:<69}│".center(columns))
+    print(f"│  Degree     : {stud_degree:<69}│".center(columns))
+    print(f"│  Year Level : {stud_level:<69}│".center(columns))
+    print(f"│  Signature  : {stud_signature:<69}│".center(columns))
+    print(("│" + " " * 84 + "│").center(columns))
+    print(("╰" + "─" * 84 + "╯").center(columns))
 
-    msg = input_key("Currently not available... ")
-    if msg:
-        clear(100)
-        check_attendance()
+    print("\033[7F", end="")
+    current_str = stud_name
+    stud_name = str(limit_input(f"  │  Name       : ", 67).upper())
+    print("\033[1E", end="")
+    current_str = stud_department
+    stud_department = str(limit_input(f"  │  Department : ", 67).title())
+    print("\033[1E", end="")
+    current_str = stud_degree
+    stud_degree = str(limit_input(f"  │  Degree     : ", 67).title())
+    print("\033[1E", end="")
+    current_str = stud_level
+    stud_level = str(limit_input(f"  │  Year Level : ", 67))
+    print("\033[1E", end="")
+    current_str = stud_signature
+    stud_signature = str(limit_input(f"  │  Signature  : ", 25))
+    current_str = ""
+
+    changes = False
+    if stud_name != student_details[1]:
+        changes = True
+    elif stud_department != student_details[2]:
+        changes = True
+    elif stud_degree != student_details[3]:
+        changes = True
+    elif stud_level != student_details[4]:
+        changes = True
+    elif stud_signature != student_details[5]:
+        changes = True
+
+    modifying_student_details = True
+    print("\033[3E", end="")
+    if changes:
+        print("\n", end="")
+        print(("-" * 86).center(90))
+        print(f"[Y] Save Changes{"":<20}[N] Discard Changes\n".center(90))
+        while True:
+            option = input_key(f"{"":<5}Are you sure you want to save? ")
+            match option.upper():
+                case "Y":
+                    student_details = [stud_no, stud_name, stud_department, stud_degree, stud_level, stud_signature]
+                    update_student(student_details)
+                    # connection.commit()
+                    break
+                case "N":
+                    clear(100)
+                    modifying_student_details = False
+                    check_attendance()
+                case _:
+                    clear(1)
+
+        clear(5)
+        print(f"{"":<5}MSG: Successfully saved.\n")
+        print(("-" * 86).center(90))
+        print(f"[S] Modify Class Schedule{"":<20}[N] Modify Again\n".center(90))
+        while True:
+            option = input_key(f"{"":<5}Press [Y] to return Home. ")
+            match option.upper():
+                case "S":
+                    modify_schedule()
+                case "N":
+                    clear(100)
+                    modify_student_details()
+                case "Y":
+                    clear(100)
+                    modifying_student_details = False
+                    check_attendance()
+                case _:
+                    clear(1)
+    else:
+        print(f"{"":<5}MSG: No changes have been made.\n")
+        print(("-" * 86).center(90))
+        print(f"[Y] Home{"":<20}[N] Modify again\n".center(90))
+        while True:
+            option = input_key(f"{"":<5}Choice: ")
+            match option.upper():
+                case "Y":
+                    clear(100)
+                    modifying_student_details = False
+                    check_attendance()
+                case "N":
+                    clear(100)
+                    modify_student_details()
+                case _:
+                    clear(1)
+
+
+def update_course(stud_no, sched_day, current_total_course, day_to_modify):
+    print(("│" + " " * 40 + "│").center(columns))
+    print(("│" + " " * 40 + "│").center(columns))
+    print(("│" + " " * 40 + "│").center(columns))
+    print(("│" + " " * 40 + "│").center(columns))
+    print(("│" + " " * 40 + "│").center(columns))
+    print(("│" + " " * 40 + "│").center(columns))
+    print(("│" + " " * 40 + "│").center(columns))
+    print(("╰" + "─" * 40 + "╯").center(columns))
+
+    while True:
+        print("\033[8F", end="")
+        print(f"{"":<24}│ ► {sched_day} {[current_total_course]}")
+        print("\033[2E", end="")
+        while True:
+            try:
+                total_course = int(input_key(f"{"":<24}│     Total course MAX(6): "))
+                if total_course <= 6:
+                    print("\033[3E", end="")
+                    clear(4)
+                    print(("│" + " " * 40 + "│").center(columns))
+                    break
+                else:
+                    print("\r", end="")
+                    print("\033[1F", end="")
+            except ValueError:
+                print("\r", end="")
+                print("\033[1F", end="")
+
+        print("\033[4F", end="")
+        print(f"{"":<24}│ ► {sched_day} [{total_course}]")
+
+        new_schedule = []
+        num = 0
+        global current_str
+
+        for sched in day_to_modify:
+            if num == total_course:
+                pass
+            while True:
+                print(f"│{"-" * 36:^40}│".center(columns))
+                print(f"│{f"   Course Title : {sched[1]}":<40}│".center(columns))
+                print(f"│{f"   Time         : {sched[3]}":<40}│".center(columns))
+                print(("│" + " " * 40 + "│").center(columns))
+                print(("╰" + "─" * 40 + "╯").center(columns))
+
+                print("\033[4F", end="")
+                current_str = sched[1]
+                sched_course = str(limit_input(f"{"":<24}│   Course Title : ", 19))
+                print("\033[1E", end="")
+                current_str = sched[3]
+                while True:
+                    print(("│" + " " * 40 + "│").center(columns))
+                    print(("│" + " " * 40 + "│").center(columns))
+                    print(("╰" + "─" * 40 + "╯").center(columns))
+                    print("\033[3F", end="")
+
+                    sched_time = str(limit_input(f"{"":<24}│   Time         : ", 19).upper())
+                    if validate_time_format(sched_time):
+                        start, end = map(convert_to_24hrs, sched_time.split(' - '))
+                        if (end - start) > 0:
+                            break
+                        else:
+                            print("\033[3E", end="")
+                            msg = input_key(f"{"":<24}MSG: Wrong time schedule. ")
+                            if msg:
+                                clear(4)
+                    else:
+                        print("\033[3E", end="")
+                        msg = input_key(f"{"":<19}MSG: Invalid time format.\n"
+                                        f"{"":<19}     Please follow the format: 10:00 AM - 12:00 PM ")
+                        if msg:
+                            clear(5)
+
+                conflict = check_conflict(new_schedule, sched_day, sched_time)
+                if conflict is None:
+                    new_schedule.append((stud_no, sched_course, sched_day, sched_time))
+                    num += 1
+                    print("\033[1E", end="")
+                    break
+                else:
+                    print("\033[3E", end="")
+                    msg = input_key(f"{"":<24}MSG: conflict schedule with {conflict.upper()}. ")
+                    if msg:
+                        clear(6)
+
+        while num < total_course:
+            current_str = ""
+            print(f"│{"-" * 36:^40}│".center(columns))
+            print(f"│{"   Course Title :":<40}│".center(columns))
+            print(f"│{"   Time         :":<40}│".center(columns))
+            print(("│" + " " * 40 + "│").center(columns))
+            print(("╰" + "─" * 40 + "╯").center(columns))
+
+            print("\033[4F", end="")
+            sched_course = str(limit_input(f"{"":<24}│   Course Title : ", 19))
+            print("\033[1E", end="")
+            while True:
+                print(("│" + " " * 40 + "│").center(columns))
+                print(("│" + " " * 40 + "│").center(columns))
+                print(("╰" + "─" * 40 + "╯").center(columns))
+                print("\033[3F", end="")
+
+                sched_time = str(limit_input(f"{"":<24}│   Time         : ", 19).upper())
+                if validate_time_format(sched_time):
+                    start, end = map(convert_to_24hrs, sched_time.split(' - '))
+                    if (end - start) > 0:
+                        break
+                    else:
+                        print("\033[3E", end="")
+                        msg = input_key(f"{"":<24}MSG: Wrong time schedule. ")
+                        if msg:
+                            clear(4)
+                else:
+                    print("\033[3E", end="")
+                    msg = input_key(f"{"":<19}MSG: Invalid time format.\n"
+                                    f"{"":<19}     Please follow the format: 10:00 AM - 12:00 PM ")
+                    if msg:
+                        clear(5)
+
+            conflict = check_conflict(new_schedule, sched_day, sched_time)
+            if conflict is None:
+                new_schedule.append((stud_no, sched_course, sched_day, sched_time))
+                num += 1
+                print("\033[1E", end="")
+            else:
+                print("\033[3E", end="")
+                msg = input_key(f"{"":<24}MSG: conflict schedule with {conflict.upper()}. ")
+                if msg:
+                    clear(6)
 
 
 def modify_schedule():
-    tab_title("MODIFY SCHEDULE")
+    if not modifying_student_details:
+        tab_title("MODIFY SCHEDULE")
+        # student("Modify Schedule")
+        # tab_title("MODIFY SCHEDULE")
 
-    student("Modify Schedule")
+    # _details(student_details)
 
-    tab_title("MODIFY SCHEDULE")
+    print(("╭" + "─" * 40 + "╮").center(columns))
+    print(f"│{"CLASS SCHEDULE:":^40}│".center(columns))
+    print(("├" + "─" * 40 + "┤").center(columns))
+    print(f"│{"  Select a day you want to modify.":<40}│".center(columns))
+    print(f"│{"     " + f"{"[1] Monday":<20}[5] Friday":<40}│".center(columns))
+    print(f"│{"     " + f"{"[2] Tuesday":<20}[6] Saturday":<40}│".center(columns))
+    print(f"│{"     " + f"{"[3] Wednesday":<20}[7] Sunday":<40}│".center(columns))
+    print(f"│{"     [4] Thursday":<40}│".center(columns))
+    print(("│" + " " * 40 + "│").center(columns))
+    print(("│" + " " * 40 + "│").center(columns))
+    print(("╰" + "─" * 40 + "╯").center(columns))
+
+    print("\033[2F", end="")
+    choice = int_input(f"{"":<24}│  Choice: ", 7)
+
+    _days = []
+
+    for day in choice:
+        _days.append(days[int(day) - 1])
+
+    _days.sort(key=lambda x: days.index(x))
+
+    stud = "23-57973"
+
+    for day in _days:
+        cursor.execute("SELECT * FROM ClassSchedule WHERE Student_No = ? AND _Day = ?", (stud, day))
+        schedule.extend(cursor.fetchall())
+
+    print("\033[6F", end="")
+    for day in _days:
+        _total = 0
+        _to_modify = []
+        for sched in schedule:
+            if sched[2] == day:
+                _total += 1
+                _to_modify.append(sched)
+
+        update_course(stud, day, _total, _to_modify)
 
     msg = input_key("Currently not available... ")
     if msg:
@@ -1140,4 +1468,5 @@ if __name__ == "__main__":
     set_console_size(90, 45)
     columns = os.get_terminal_size().columns
     center_console_window()
+    modify_schedule()
     check_attendance()
