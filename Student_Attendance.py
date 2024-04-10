@@ -413,8 +413,8 @@ def student(__usage):
         print("\033[3F", end="")
 
         while True:
-            choice = input_key(f"{"":<21}│  Choice: ")
-            match choice:
+            key_pressed = input_key(f"{"":<21}│  Choice: ")
+            match key_pressed:
                 case "1":
                     print("\033[3E", end="")
                     clear(100)
@@ -459,7 +459,7 @@ def student(__usage):
             return
         else:
             print("\033[3E", end="")
-            print("MSG: Wrong signature.Try again".center(columns))
+            print("MSG: Wrong signature. Please try again. ".center(columns))
             print("\033[3F", end="")
             clear(1)
             continue
@@ -471,7 +471,7 @@ def _details(_student):
     stud_degree = _student[3]
     stud_level = _student[4]
 
-    print(f"┆  {Text.Style.Underline + "Student Details:" + Text.NONE:<92}┆".center(98))
+    print(f"┆  {Text.Style.Underline + "Student Details:" + Text.NONE:<92}┆".center(columns + 8))
     print(f"┆{"":<86}┆".center(columns))
     print(f"┆    Name        : {stud_name:<68}┆".center(columns))
     print(f"┆    Department  : {stud_department:<68}┆".center(columns))
@@ -921,8 +921,8 @@ def register_new_student():
         print(f"{"":<24}│     [2] Include weekends\n\n")
 
         while True:
-            choice1 = input_key(f"{"":<24}│  Choice: ")
-            match choice1:
+            key_pressed1 = input_key(f"{"":<24}│  Choice: ")
+            match key_pressed1:
                 case "0":
                     clear(100)
                     student("Check Attendance")
@@ -998,8 +998,8 @@ def register_new_student():
             print(("-" * int(columns - 4)).center(columns))
             print(f"[S] Modify Schedule{"":<26}[D] Modify Student Details\n".center(columns))
             while True:
-                option = input_key(f"{"":<5}Are you sure you want to save? Press [Y] to save. ")
-                match option.upper():
+                key_pressed = input_key(f"{"":<5}Are you sure you want to save? Press [Y] to save. ")
+                match key_pressed.upper():
                     case "S":
                         clear(100)
                         os.system(f"mode con cols={90} lines={45}")
@@ -1037,8 +1037,8 @@ def register_new_student():
             print(("-" * int(columns - 4)).center(columns))
             print(f"[S] Modify Schedule{"":<26}[D] Modify Student Details\n".center(columns))
             while True:
-                option = input_key(f"{"":<5}Press [N] to register again. ")
-                match option.upper():
+                key_pressed = input_key(f"{"":<5}Press [N] to register again. ")
+                match key_pressed.upper():
                     case "S":
                         clear(100)
                         os.system(f"mode con cols={90} lines={45}")
@@ -1072,8 +1072,8 @@ def register_new_student():
         print(f"│  {"   [0] Exit":<82}│".center(columns))
         print(("│" + " " * 84 + "│").center(columns))
         while True:
-            key = input_key(f"  │  Choice: ")
-            match key.upper():
+            key_pressed = input_key(f"  │  Choice: ")
+            match key_pressed.upper():
                 case "1":
                     print("\033[5E", end="")
                     clear(100)
@@ -1219,61 +1219,50 @@ def modify_student_details():
     elif stud_signature != student_details[5]:
         changes = True
 
-    modifying_student_details = True
     print("\033[3E", end="")
-    if changes:
-        print("\n", end="")
-        print(("-" * 86).center(90))
-        print(f"[Y] Save Changes{"":<20}[N] Discard Changes\n".center(90))
-        while True:
-            option = input_key(f"{"":<5}Are you sure you want to save? ")
-            match option.upper():
-                case "Y":
-                    student_details = [stud_no, stud_name, stud_department, stud_degree, stud_level, stud_signature]
-                    update_student(student_details)
-                    # connection.commit()
-                    break
-                case "N":
-                    clear(100)
-                    modifying_student_details = False
-                    check_attendance()
-                case _:
-                    clear(1)
+    if not changes:
+        print(f"{"":<5}NOTE: No changes have been made.")
 
+    modifying_student_details = True
+    print("\n", end="")
+    print(("-" * 86).center(90))
+    print(f"[Y] Save{"":<26}[N] Modify Again\n".center(columns))
+    while True:
+        key_pressed = input_key(f"{"":<5}Are you sure you want to save? ")
+        match key_pressed.upper():
+            case "Y":
+                student_details = [stud_no, stud_name, stud_department, stud_degree, stud_level, stud_signature]
+                update_student(student_details)
+                # connection.commit()
+                break
+            case "N":
+                clear(100)
+                modify_student_details()
+            case _:
+                clear(1)
+
+    if changes:
         clear(5)
-        print(f"{"":<5}MSG: Successfully saved.\n")
-        print(("-" * 86).center(90))
-        print(f"[S] Modify Class Schedule{"":<20}[N] Modify Again\n".center(90))
-        while True:
-            option = input_key(f"{"":<5}Press [Y] to return Home. ")
-            match option.upper():
-                case "S":
-                    modify_schedule()
-                case "N":
-                    clear(100)
-                    modify_student_details()
-                case "Y":
-                    clear(100)
-                    modifying_student_details = False
-                    check_attendance()
-                case _:
-                    clear(1)
     else:
-        print(f"{"":<5}MSG: No changes have been made.\n")
-        print(("-" * 86).center(90))
-        print(f"[Y] Home{"":<20}[N] Modify again\n".center(90))
-        while True:
-            option = input_key(f"{"":<5}Choice: ")
-            match option.upper():
-                case "Y":
-                    clear(100)
-                    modifying_student_details = False
-                    check_attendance()
-                case "N":
-                    clear(100)
-                    modify_student_details()
-                case _:
-                    clear(1)
+        clear(6)
+
+    print(f"{"":<5}MSG: Student details were successfully updated.\n")
+    print(("-" * 86).center(90))
+    print(f"[S] Modify Class Schedule{"":<20}[N] Modify Again\n".center(90))
+    while True:
+        key_pressed = input_key(f"{"":<5}Press [Y] to return Home. ")
+        match key_pressed.upper():
+            case "S":
+                modify_schedule()
+            case "N":
+                clear(100)
+                modify_student_details()
+            case "Y":
+                clear(100)
+                modifying_student_details = False
+                check_attendance()
+            case _:
+                clear(1)
 
 
 def update_course(stud_no, sched_day, current_total_course, day_to_modify):
@@ -1411,12 +1400,12 @@ def update_course(stud_no, sched_day, current_total_course, day_to_modify):
 
 
 def modify_schedule():
+    global columns
     if not modifying_student_details:
         tab_title("MODIFY SCHEDULE")
-        # student("Modify Schedule")
-        # tab_title("MODIFY SCHEDULE")
-
-    # _details(student_details)
+        student("Modify Schedule")
+        tab_title("MODIFY SCHEDULE")
+        _details(student_details)
 
     print(("╭" + "─" * 40 + "╮").center(columns))
     print(f"│{"CLASS SCHEDULE:":^40}│".center(columns))
@@ -1431,37 +1420,88 @@ def modify_schedule():
     print(("╰" + "─" * 40 + "╯").center(columns))
 
     print("\033[2F", end="")
-    choice = int_input(f"{"":<24}│  Choice: ", 7)
+    key_pressed = int_input(f"{"":<24}│  Choice: ", 7)
 
     _days = []
 
-    for day in choice:
+    for day in key_pressed:
         _days.append(days[int(day) - 1])
 
     _days.sort(key=lambda x: days.index(x))
 
-    stud = "23-57973"
+    stud_no = "23-57973"
 
-    for day in _days:
-        cursor.execute("SELECT * FROM ClassSchedule WHERE Student_No = ? AND _Day = ?", (stud, day))
-        schedule.extend(cursor.fetchall())
+    cursor.execute("SELECT * FROM ClassSchedule WHERE Student_No = ?", (stud_no,))
+    schedule.extend(cursor.fetchall())
 
     print("\033[6F", end="")
-    for day in _days:
+    for _day in _days:
         _total = 0
         _to_modify = []
         for sched in schedule:
-            if sched[2] == day:
+            if sched[2] == _day:
                 _total += 1
                 _to_modify.append(sched)
 
-        update_course(stud, day, _total, _to_modify)
+        update_course(stud_no, _day, _total, _to_modify)
+        cursor.execute("DELETE FROM ClassSchedule WHERE Student_No = ? AND _Day = ?", (stud_no, _day))
 
-    print(new_schedule)
-    msg = input_key("Currently not available... ")
-    if msg:
-        clear(100)
-        check_attendance()
+    for _day in _days:
+        for sched in schedule:
+            if not sched[2] == _day:
+                new_schedule.append(sched)
+
+    new_schedule1 = sorted(new_schedule, key=sort_time)
+    add_schedule(new_schedule1)
+
+    max_count = 0
+    if new_schedule1:
+        day_counts = {}  # Dictionary to store counts of schedules for each day
+
+        for entry in new_schedule1:
+            day = entry[2]  # Get the day from the entry
+            if day in day_counts:
+                day_counts[day] += 1  # Increment the count for this day
+            else:
+                day_counts[day] = 1  # Initialize the count for this day
+
+        # Find the day with the maximum count of schedules
+        max_day = max(day_counts, key=day_counts.get)
+        max_count = day_counts[max_day]
+
+    if max_count == 6:
+        os.system(f"mode con cols={120} lines={53}")
+    else:
+        os.system(f"mode con cols={120} lines={45}")
+
+    center_console_window()
+    columns = os.get_terminal_size().columns
+    tab_title("MODIFY SCHEDULE")
+    _details(student_details)
+    class_schedule(new_schedule1)
+    print("\n")
+    print(("-" * int(columns - 4)).center(columns))
+    print(f"[N] Modify Again{"":<26}[D] Modify Student Details\n".center(columns))
+    while True:
+        key_pressed = input_key(f"{"":<5}Are you sure you want to save? Press [Y] to save. ")
+        match key_pressed.upper():
+            case "N":
+                clear(100)
+                os.system(f"mode con cols={90} lines={45}")
+                center_console_window()
+                columns = os.get_terminal_size().columns
+                modify_schedule()
+            case "D":
+                clear(100)
+                os.system(f"mode con cols={90} lines={45}")
+                center_console_window()
+                columns = os.get_terminal_size().columns
+                modify_schedule()
+            case "Y":
+                # connection.commit()
+                break
+            case _:
+                clear(1)
 
 
 if __name__ == "__main__":
