@@ -952,7 +952,7 @@ def register_new_student():
                     add_course(stud_no, day)
                 break
 
-        schedule1 = sorted(schedule, key=sort_time)
+        schedule1 = sorted(schedule, key=sort_schedule)
         stud = [stud_no, stud_name, stud_department, stud_degree, stud_level, stud_signature]
 
         max_count = 0
@@ -1079,8 +1079,6 @@ def register_new_student():
                     clear(100)
                     check_attendance()
                 case "2":
-                    print("\033[5E", end="")
-                    clear(100)
                     modify_schedule()
                 case "3":
                     print("\033[5E", end="")
@@ -1098,9 +1096,11 @@ def register_new_student():
             break
 
 
-def sort_time(schedule_item):
+def sort_schedule(schedule_item):
     day_str, time_str = schedule_item[2], schedule_item[3]
-    return datetime.datetime.strptime(day_str + " " + time_str.split(" - ")[0], "%A %I:%M %p")
+    day_num = str(days.index(day_str) + 1)
+    start_time = datetime.datetime.strptime(time_str.split(" - ")[0], "%I:%M %p")
+    return day_num, start_time
 
 
 def class_schedule(__schedule):
@@ -1268,7 +1268,6 @@ def modify_student_details():
 def update_course(stud_no, sched_day, current_total_course, day_to_modify):
     global new_schedule
     global current_str
-    new_schedule.clear()
     num = 0
 
     print(("│" + " " * 40 + "│").center(columns))
@@ -1400,21 +1399,91 @@ def update_course(stud_no, sched_day, current_total_course, day_to_modify):
     clear((3 * num) + 3)
 
 
+def max_schedule_day(__schedule):
+    max_count = 0
+    if __schedule:
+        day_counts = {}  # Dictionary to store counts of schedules for each day
+
+        for entry in __schedule:
+            day = entry[2]  # Get the day from the entry
+            if day in day_counts:
+                day_counts[day] += 1  # Increment the count for this day
+            else:
+                day_counts[day] = 1  # Initialize the count for this day
+
+        # Find the day with the maximum count of schedules
+        max_day = max(day_counts, key=day_counts.get)
+        max_count = day_counts[max_day]
+    return max_count
+
+
 def modify_schedule():
     global columns
+    global modifying_student_details
     global modifying_class_schedule
+    new_schedule.clear()
 
-    if not modifying_student_details and not modifying_class_schedule:
-        tab_title("MODIFY SCHEDULE")
-        student("Modify Schedule")
+    if not modifying_class_schedule:
+        if not modifying_student_details:
+            schedule.clear()
+            tab_title("MODIFY SCHEDULE")
+            student("Modify Schedule")
+
+            cursor.execute("SELECT * FROM ClassSchedule WHERE Student_No = ?", (student_details[0],))
+            schedule.extend(cursor.fetchall())
+
+        max_sched = max_schedule_day(schedule)
+        if max_sched == 6:
+            os.system(f"mode con cols={120} lines={53}")
+        else:
+            os.system(f"mode con cols={120} lines={45}")
+
+        center_console_window()
+        columns = os.get_terminal_size().columns
+
         tab_title("MODIFY SCHEDULE")
         _details(student_details)
 
-        cursor.execute("SELECT * FROM ClassSchedule WHERE Student_No = ?", (student_details[0],))
-        schedule.extend(cursor.fetchall())
+        # if modifying_student_details:
+        #     tab_title("MODIFY STUDENT DETAILS")
+        #     print(("╭" + "─" * 84 + "╮").center(columns))
+        #     print(f"│{"STUDENT DETAILS:":^84}│".center(columns))
+        #     print(("├" + "─" * 84 + "┤").center(columns))
+        #     print(("│" + " " * 84 + "│").center(columns))
+        #     print(f"│  Student No.: {student_details[0]:<69}│".center(columns))
+        #     print(f"│  Name       : {student_details[1]:<69}│".center(columns))
+        #     print(f"│  Department : {student_details[2]:<69}│".center(columns))
+        #     print(f"│  Degree     : {student_details[3]:<69}│".center(columns))
+        #     print(f"│  Year Level : {student_details[4]:<69}│".center(columns))
+        #     print(f"│  Signature  : {student_details[5]:<69}│".center(columns))
+        #     print(("│" + " " * 84 + "│").center(columns))
+        #     print(("╰" + "─" * 84 + "╯").center(columns))
 
-    stud_no = student_details[0]
+        class_schedule(schedule)
 
+        print("\n", end="")
+        print(("-" * int(columns - 4)).center(columns))
+        print(f"[Y] Yes{"":<26}[N] No\n".center(columns))
+        while True:
+            key_pressed = input_key(f"{"":<5}Are you sure you want to modify it? ")
+            match key_pressed.upper():
+                case "N":
+                    clear(100)
+                    os.system(f"mode con cols={90} lines={45}")
+                    columns = os.get_terminal_size().columns
+                    center_console_window()
+                    check_attendance()
+                case "Y":
+                    os.system(f"mode con cols={90} lines={45}")
+                    columns = os.get_terminal_size().columns
+                    center_console_window()
+                    modifying_class_schedule = True
+                    modify_schedule()
+                case _:
+                    clear(1)
+
+    tab_title("MODIFY SCHEDULE")
+    _details(student_details)
     print(("╭" + "─" * 40 + "╮").center(columns))
     print(f"│{"CLASS SCHEDULE:":^40}│".center(columns))
     print(("├" + "─" * 40 + "┤").center(columns))
@@ -1446,50 +1515,49 @@ def modify_schedule():
                 _total += 1
                 _to_modify.append(sched)
 
-        update_course(stud_no, _day, _total, _to_modify)
-        cursor.execute("DELETE FROM ClassSchedule WHERE Student_No = ? AND _Day = ?", (stud_no, _day))
+        update_course(student_details[0], _day, _total, _to_modify)
 
-    for _day in _days:
-        for sched in schedule:
-            if not sched[2] == _day:
-                new_schedule.append(sched)
+    for sched in schedule:
+        if sched[2] not in _days:
+            new_schedule.append(sched)
 
-    new_schedule1 = sorted(new_schedule, key=sort_time)
-    add_schedule(new_schedule1)
+    _new_schedule = sorted(new_schedule, key=sort_schedule)
 
-    changes = False
+    max_sched = max_schedule_day(_new_schedule)
 
-    for _schedule1 in schedule:
-        if _schedule1 not in new_schedule1:
-            changes = True
-            break
-
-    max_count = 0
-    if new_schedule1:
-        day_counts = {}  # Dictionary to store counts of schedules for each day
-
-        for entry in new_schedule1:
-            day = entry[2]  # Get the day from the entry
-            if day in day_counts:
-                day_counts[day] += 1  # Increment the count for this day
-            else:
-                day_counts[day] = 1  # Initialize the count for this day
-
-        # Find the day with the maximum count of schedules
-        max_day = max(day_counts, key=day_counts.get)
-        max_count = day_counts[max_day]
-
-    if max_count == 6:
+    if max_sched == 6:
         os.system(f"mode con cols={120} lines={53}")
     else:
         os.system(f"mode con cols={120} lines={45}")
 
     center_console_window()
     columns = os.get_terminal_size().columns
-    tab_title("MODIFY SCHEDULE")
-    _details(student_details)
-    class_schedule(new_schedule1)
-    modifying_class_schedule = True
+
+    if not modifying_student_details:
+        tab_title("MODIFY SCHEDULE")
+        _details(student_details)
+    else:
+        tab_title("MODIFY STUDENT DETAILS")
+        print(("╭" + "─" * 84 + "╮").center(columns))
+        print(f"│{"STUDENT DETAILS:":^84}│".center(columns))
+        print(("├" + "─" * 84 + "┤").center(columns))
+        print(("│" + " " * 84 + "│").center(columns))
+        print(f"│  Student No.: {student_details[0]:<69}│".center(columns))
+        print(f"│  Name       : {student_details[1]:<69}│".center(columns))
+        print(f"│  Department : {student_details[2]:<69}│".center(columns))
+        print(f"│  Degree     : {student_details[3]:<69}│".center(columns))
+        print(f"│  Year Level : {student_details[4]:<69}│".center(columns))
+        print(f"│  Signature  : {student_details[5]:<69}│".center(columns))
+        print(("│" + " " * 84 + "│").center(columns))
+        print(("╰" + "─" * 84 + "╯").center(columns))
+
+    class_schedule(_new_schedule)
+
+    changes = False
+    for sched in schedule:
+        if sched not in _new_schedule:
+            changes = True
+            break
 
     if not changes:
         print(f"{"":<5}NOTE: No changes have been made.")
@@ -1505,12 +1573,27 @@ def modify_schedule():
                 os.system(f"mode con cols={90} lines={45}")
                 columns = os.get_terminal_size().columns
                 center_console_window()
-                tab_title("MODIFY SCHEDULE")
-                _details(student_details)
                 modify_schedule()
             case "Y":
-                # connection.commit()
-                break
+                cursor.execute("DELETE FROM ClassSchedule WHERE Student_No = ?", (student_details[0],))
+                add_schedule(_new_schedule)
+                connection.commit()
+                clear(100)
+                os.system(f"mode con cols={90} lines={45}")
+                columns = os.get_terminal_size().columns
+                center_console_window()
+                print("\033[23E", end="")
+                if modifying_student_details and modifying_class_schedule:
+                    print("MSG: Student details and class schedule successfully updated.".center(columns))
+                    modifying_student_details = False
+                    modifying_class_schedule = False
+                elif modifying_class_schedule:
+                    print("MSG: Class schedule successfully updated.".center(columns))
+                    modifying_class_schedule = False
+                print("\033[f", end="")
+                student_details.clear()
+                schedule.clear()
+                modify_schedule()
             case _:
                 clear(1)
 
