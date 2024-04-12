@@ -12,6 +12,7 @@ import os
 import sys
 import re
 
+# Initialize variable
 student_details = []
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 schedule = []
@@ -22,6 +23,7 @@ modifying_student_details = False
 modifying_class_schedule = False
 
 
+# Class Text Style and Color
 class Text:
     NONE = "\033[0m"
 
@@ -106,6 +108,7 @@ cursor.execute("CREATE TABLE IF NOT EXISTS Attendance ("
 connection.commit()
 
 
+# Function for requesting administration
 def run_as_administrator():
     # Checking current console if not running as administrator
     if not ctypes.windll.shell32.IsUserAnAdmin():
@@ -113,6 +116,7 @@ def run_as_administrator():
         sys.exit()
 
 
+# Function for aligning console to center windows
 def center_console_window():
     # Get handle to the console window
     console_handle = ctypes.windll.kernel32.GetConsoleWindow()
@@ -135,14 +139,17 @@ def center_console_window():
         ctypes.windll.user32.MoveWindow(console_handle, x, y, console_width, console_height, True)
 
 
+# Function for assigning console title
 def set_console_title(title):
     ctypes.windll.kernel32.SetConsoleTitleW(title)
 
 
+# Function for resizing console
 def set_console_size(width: int, height: int):
     os.system(f"mode con cols={width} lines={height}")
 
 
+# Function for not allowing user to resize and maximizing the console
 def set_window_style():
     # Define necessary constants
     gwl_style = -16
@@ -160,11 +167,13 @@ def set_window_style():
         ctypes.windll.user32.SetWindowLongW(hwnd, gwl_style, style)
 
 
+# Function for clearing/deleting a line
 def clear(line):
     for _ in range(line):
         print("\x1b[1A\x1b[2K", end="\r")
 
 
+# Function for key-pressed
 def input_key(__prompt):
     print(__prompt, end='', flush=True)  # Print the prompt without a newline
     while True:
@@ -177,18 +186,11 @@ def input_key(__prompt):
             continue
 
 
-def not_empty_input(__prompt):
-    while True:
-        user_input = input(__prompt)
-        if user_input:
-            return user_input
-        else:
-            clear(1)
-
-
+# Function for limiting user input
 def limit_input(_prompt: str, _length: int):
-    print(_prompt, end='', flush=True)
+    # Current_str is the current input of the user. This will be used to modify the class schedule and student details.
     global current_str
+    print(_prompt, end='', flush=True)  # Print the prompt without a newline
     input_str = current_str
     print(input_str, end='', flush=True)
     cursor_position = len(input_str)
@@ -200,25 +202,16 @@ def limit_input(_prompt: str, _length: int):
                     break
             elif char == b'\x08':  # Backspace key pressed
                 if len(input_str) == cursor_position > 0:  # For deleting within the maximum text length
-                    # Clear the character in input_str
                     input_str = input_str[:cursor_position - 1] + input_str[cursor_position:]
-                    # Decrease the cursor position to 1
                     cursor_position -= 1
-                    # Clear the display character
                     print('\b \b', end='', flush=True)
 
                 if len(input_str) > cursor_position > 0:  # For deleting between text
-                    # Get the current total length of input_str
                     total_input_str = len(input_str)
-                    # Clear the character in input_str
                     input_str = input_str[:cursor_position - 1] + input_str[cursor_position:]
-                    # Get the total text to be reprinted
                     chars_to_reprint = len(input_str) - cursor_position
-                    # Clearing only the input display
                     print('\033[C' * (chars_to_reprint + 1) + '\b \b' * total_input_str + input_str, end='', flush=True)
-                    # Moving the cursor back to it's position
                     print('\033[D' * (chars_to_reprint + 2) + '\033[C', end='', flush=True)
-                    # Decrease the cursor position to 1
                     cursor_position -= 1
 
             elif char == b'\xe0':  # Arrow key pressed (Allow user to move the cursor)
@@ -238,37 +231,37 @@ def limit_input(_prompt: str, _length: int):
                 if len(input_str) < _length:
                     input_str = input_str[:cursor_position] + ' ' + input_str[cursor_position:]
                     chars_to_reprint = len(input_str) - cursor_position
-                    remaining_text = input_str[cursor_position:]  # Get the remaining text after inserting the character
-                    print(remaining_text, end='', flush=True)  # Print the character and remaining text
-                    print('\033[D' * (chars_to_reprint - 1), end='', flush=True)  # Move cursor forward
+                    remaining_text = input_str[cursor_position:]
+                    print(remaining_text, end='', flush=True)
+                    print('\033[D' * (chars_to_reprint - 1), end='', flush=True)
                     cursor_position += 1
 
-            elif char == b'\t':
+            elif char == b'\t':  # Disable tab key
                 pass
 
-            elif char == b'\x00':
+            elif char == b'\x00':  # Num-Lock is off
                 next_char = msvcrt.getch()
                 if next_char:
                     pass
 
             elif char.isalpha() or char.isalnum() or char.isascii():
                 if _length > len(input_str) > cursor_position:  # Allow user to input between text
-                    # Inserting character between text in input_str
                     input_str = input_str[:cursor_position] + char.decode('utf-8') + input_str[cursor_position:]
                     chars_to_reprint = len(input_str) - cursor_position
-                    remaining_text = input_str[cursor_position:]  # Get the remaining text after inserting the character
-                    print(remaining_text, end='', flush=True)  # Print the character and remaining text
-                    print('\033[D' * (chars_to_reprint - 1), end='', flush=True)  # Move cursor forward
+                    remaining_text = input_str[cursor_position:]
+                    print(remaining_text, end='', flush=True)
+                    print('\033[D' * (chars_to_reprint - 1), end='', flush=True)
                     cursor_position += 1
                 elif cursor_position == len(input_str) < _length:
-                    input_str += char.decode('utf-8')  # Decode bytes to string
-                    print(input_str[-1], end='', flush=True)  # Print the character
+                    input_str += char.decode('utf-8')
+                    print(input_str[-1], end='', flush=True)
                     cursor_position += 1
     return input_str
 
 
+# Function for allowing the user to input only integers and allowing them to decide what numbers should be pressed
 def int_input(_prompt: str, _range: int):
-    print(_prompt, end='', flush=True)
+    print(_prompt, end='', flush=True)  # Print the prompt without a newline
     input_str = ""
     cursor_position = len(input_str)
     while True:
@@ -284,23 +277,23 @@ def int_input(_prompt: str, _range: int):
                     cursor_position -= 1
                     print('\b \b', end='', flush=True)
 
-            elif char == b'\xe0':
+            elif char == b'\xe0':  # Disable arrow key
                 arrow = msvcrt.getch()
                 if arrow:
                     pass
 
-            elif char == b' ' or char == b'\t':
+            elif char == b' ' or char == b'\t':  # Disable space and tab key
                 pass
 
-            elif char == b'\x00':
+            elif char == b'\x00':  # Num-Lock is off
                 next_char = msvcrt.getch()
                 if next_char:
                     pass
 
-            elif char.isalpha() or char.isascii() and not char.isalnum():
+            elif char.isalpha() or char.isascii() and not char.isalnum():  # Disable all letters and symbols
                 pass
 
-            elif char.isalnum():
+            elif char.isalnum():  # Numbers key
                 if char.decode('utf-8') in input_str:
                     pass
                 else:
@@ -311,12 +304,12 @@ def int_input(_prompt: str, _range: int):
     return input_str
 
 
+# Function tab header and title
 def tab_title(title):
-    # Get the current date
-    current_date = datetime.datetime.now().date().strftime("%B %d, %Y | %A")
+    current_date = datetime.datetime.now().date().strftime("%B %d, %Y | %A")  # Get the current date
+    current_time = datetime.datetime.now().time().strftime("%I:%M %p")  # Get the current time
 
-    # Get the current time
-    current_time = datetime.datetime.now().time().strftime("%I:%M %p")
+    # Display tab header and title
     print(Text.Color.Foreground.Green, end="")
     print(("╔" + "═" * int(columns - 2) + "╗").center(columns))
     print(("║" + Text.Color.Foreground.Yellow + Text.Style.Bold + f"{title:^{columns-2}}" +
@@ -329,26 +322,33 @@ def tab_title(title):
     print(Text.NONE, end="")
 
 
+# Function for queuing new student details
 def add_student(_student):
     cursor.execute("INSERT INTO Student_Info VALUES (?, ?, ?, ?, ?, ?)", _student)
 
 
+# Function for queuing new class schedule
 def add_schedule(_schedule):
     cursor.executemany("INSERT INTO ClassSchedule VALUES (?, ?, ?, ?)", _schedule)
 
 
+# Function for queuing update student details
 def update_student(_student):
     cursor.execute("UPDATE Student_Info SET _Name = ?, _Department = ?, _Degree = ?, _Level = ?, _Signature = ? "
                    "WHERE Student_No = ?", _student[1:] + [_student[0]])
 
 
+# Function for queuing attendance
 def attendance(_attendance):
     cursor.executemany("INSERT INTO Attendance VALUES (?, ?, ?, ?, ?, ?, ?)", _attendance)
 
 
+# Function for getting student details
 def student(__usage):
     global student_details
     student_details.clear()
+
+    # Login display design
     print("\n" * 9)
     print("╭─────────────────────────────────────────────╮".center(columns))
     print(f"│{"STUDENT":^45}│".center(columns))
@@ -366,7 +366,7 @@ def student(__usage):
         print(f"│    {"Signature   :":<41}│".center(columns))
         print("\033[3F", end="")
 
-    while True:
+    while True:  # Validate student_no input
         stud_no = str(limit_input(f"{"":<21}│    Student No. : ", 8))
         if stud_no:
             if __usage == "Modify Schedule" or __usage == "Modify Student Details":
@@ -378,15 +378,16 @@ def student(__usage):
             print("\r", end="")
             continue
 
-    cursor.execute("SELECT * FROM Student_Info WHERE Student_No = ?", (stud_no,))
-    _student = cursor.fetchall()
-    if _student:
-        student_details = [x for item in _student for x in item[0:6]]
+    cursor.execute("SELECT * FROM Student_Info WHERE Student_No = ?", (stud_no,))  # Searching for student
+    _student = cursor.fetchall()  # Saving temporarily the search student details
+    if _student:  # Checking if student exist
+        student_details = [x for item in _student for x in item[0:6]]  # Saving student details as array
         if not __usage == "Modify Schedule" and not __usage == "Modify Student Details":
             print("\033[10E", end="")
             clear(100)
             return
-    else:
+    else:  # if student not exist
+        # Option display design
         print(f"│  {"OPTION:":<43}│".center(columns))
         print(f"│    {"[1] Home":<41}│".center(columns))
         print(f"│    {"[2] Register New Student":<41}│".center(columns))
@@ -399,7 +400,7 @@ def student(__usage):
         print(f"MSG: Student currently not enrolled!!!".center(columns))
         print("\033[3F", end="")
 
-        while True:
+        while True:  # Validate key_pressed
             key_pressed = input_key(f"{"":<21}│  Select: ")
             match key_pressed:
                 case "1":
@@ -424,7 +425,7 @@ def student(__usage):
             break
 
     print("\033[3E", end="")
-    while True:
+    while True:  # Validate signature
         print(f"│{"":^45}│".center(columns))
         print("\033[1F", end="")
         key_signature = str(limit_input(f"{"":<21}│    Signature   : ", 25))
@@ -440,6 +441,7 @@ def student(__usage):
             continue
 
 
+# Function for displaying student details
 def _details(_student):
     stud_name = _student[1]
     stud_department = _student[2]
