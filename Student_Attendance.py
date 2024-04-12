@@ -413,7 +413,7 @@ def student(__usage):
         print("\033[3F", end="")
 
         while True:
-            key_pressed = input_key(f"{"":<21}│  Choice: ")
+            key_pressed = input_key(f"{"":<21}│  Select: ")
             match key_pressed:
                 case "1":
                     print("\033[3E", end="")
@@ -921,7 +921,7 @@ def register_new_student():
         print(f"{"":<24}│     [2] Include weekends\n\n")
 
         while True:
-            key_pressed1 = input_key(f"{"":<24}│  Choice: ")
+            key_pressed1 = input_key(f"{"":<24}│  Select: ")
             match key_pressed1:
                 case "0":
                     clear(100)
@@ -1072,7 +1072,7 @@ def register_new_student():
         print(f"│  {"   [0] Exit":<82}│".center(columns))
         print(("│" + " " * 84 + "│").center(columns))
         while True:
-            key_pressed = input_key(f"  │  Choice: ")
+            key_pressed = input_key(f"  │  Select: ")
             match key_pressed.upper():
                 case "1":
                     print("\033[5E", end="")
@@ -1424,13 +1424,15 @@ def modify_schedule():
     new_schedule.clear()
 
     if not modifying_class_schedule:
+        schedule.clear()
+
         if not modifying_student_details:
             schedule.clear()
             tab_title("MODIFY SCHEDULE")
             student("Modify Schedule")
 
-            cursor.execute("SELECT * FROM ClassSchedule WHERE Student_No = ?", (student_details[0],))
-            schedule.extend(cursor.fetchall())
+        cursor.execute("SELECT * FROM ClassSchedule WHERE Student_No = ?", (student_details[0],))
+        schedule.extend(cursor.fetchall())
 
         max_sched = max_schedule_day(schedule)
         if max_sched == 6:
@@ -1441,23 +1443,23 @@ def modify_schedule():
         center_console_window()
         columns = os.get_terminal_size().columns
 
-        tab_title("MODIFY SCHEDULE")
-        _details(student_details)
-
-        # if modifying_student_details:
-        #     tab_title("MODIFY STUDENT DETAILS")
-        #     print(("╭" + "─" * 84 + "╮").center(columns))
-        #     print(f"│{"STUDENT DETAILS:":^84}│".center(columns))
-        #     print(("├" + "─" * 84 + "┤").center(columns))
-        #     print(("│" + " " * 84 + "│").center(columns))
-        #     print(f"│  Student No.: {student_details[0]:<69}│".center(columns))
-        #     print(f"│  Name       : {student_details[1]:<69}│".center(columns))
-        #     print(f"│  Department : {student_details[2]:<69}│".center(columns))
-        #     print(f"│  Degree     : {student_details[3]:<69}│".center(columns))
-        #     print(f"│  Year Level : {student_details[4]:<69}│".center(columns))
-        #     print(f"│  Signature  : {student_details[5]:<69}│".center(columns))
-        #     print(("│" + " " * 84 + "│").center(columns))
-        #     print(("╰" + "─" * 84 + "╯").center(columns))
+        if modifying_student_details:
+            tab_title("MODIFY STUDENT DETAILS")
+            print(("╭" + "─" * 84 + "╮").center(columns))
+            print(f"│{"STUDENT DETAILS:":^84}│".center(columns))
+            print(("├" + "─" * 84 + "┤").center(columns))
+            print(("│" + " " * 84 + "│").center(columns))
+            print(f"│  Student No.: {student_details[0]:<69}│".center(columns))
+            print(f"│  Name       : {student_details[1]:<69}│".center(columns))
+            print(f"│  Department : {student_details[2]:<69}│".center(columns))
+            print(f"│  Degree     : {student_details[3]:<69}│".center(columns))
+            print(f"│  Year Level : {student_details[4]:<69}│".center(columns))
+            print(f"│  Signature  : {student_details[5]:<69}│".center(columns))
+            print(("│" + " " * 84 + "│").center(columns))
+            print(("╰" + "─" * 84 + "╯").center(columns))
+        else:
+            tab_title("MODIFY SCHEDULE")
+            _details(student_details)
 
         class_schedule(schedule)
 
@@ -1482,8 +1484,24 @@ def modify_schedule():
                 case _:
                     clear(1)
 
-    tab_title("MODIFY SCHEDULE")
-    _details(student_details)
+    if modifying_student_details:
+        tab_title("MODIFY STUDENT DETAILS")
+        print(("╭" + "─" * 84 + "╮").center(columns))
+        print(f"│{"STUDENT DETAILS:":^84}│".center(columns))
+        print(("├" + "─" * 84 + "┤").center(columns))
+        print(("│" + " " * 84 + "│").center(columns))
+        print(f"│  Student No.: {student_details[0]:<69}│".center(columns))
+        print(f"│  Name       : {student_details[1]:<69}│".center(columns))
+        print(f"│  Department : {student_details[2]:<69}│".center(columns))
+        print(f"│  Degree     : {student_details[3]:<69}│".center(columns))
+        print(f"│  Year Level : {student_details[4]:<69}│".center(columns))
+        print(f"│  Signature  : {student_details[5]:<69}│".center(columns))
+        print(("│" + " " * 84 + "│").center(columns))
+        print(("╰" + "─" * 84 + "╯").center(columns))
+    else:
+        tab_title("MODIFY SCHEDULE")
+        _details(student_details)
+
     print(("╭" + "─" * 40 + "╮").center(columns))
     print(f"│{"CLASS SCHEDULE:":^40}│".center(columns))
     print(("├" + "─" * 40 + "┤").center(columns))
@@ -1497,7 +1515,7 @@ def modify_schedule():
     print(("╰" + "─" * 40 + "╯").center(columns))
 
     print("\033[2F", end="")
-    key_pressed = int_input(f"{"":<24}│  Choice: ", 7)
+    key_pressed = int_input(f"{"":<24}│  Select: ", 7)
 
     _days = []
 
@@ -1591,9 +1609,7 @@ def modify_schedule():
                     print("MSG: Class schedule successfully updated.".center(columns))
                     modifying_class_schedule = False
                 print("\033[f", end="")
-                student_details.clear()
-                schedule.clear()
-                modify_schedule()
+                check_attendance()
             case _:
                 clear(1)
 
@@ -1605,5 +1621,4 @@ if __name__ == "__main__":
     set_console_size(90, 45)
     columns = os.get_terminal_size().columns
     center_console_window()
-    modify_schedule()
     check_attendance()
