@@ -6,7 +6,6 @@
   <component name="ChangeListManager">
     <list default="true" id="79250d61-f5a6-40ec-936f-2124a301a605" name="Changes" comment="Update">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SAData.db" beforeDir="false" afterPath="$PROJECT_DIR$/SAData.db" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Student_Attendance.py" beforeDir="false" afterPath="$PROJECT_DIR$/Student_Attendance.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -148,7 +147,7 @@
       <workItem from="1712752692908" duration="3024000" />
       <workItem from="1712756339335" duration="16854000" />
       <workItem from="1712835910149" duration="14401000" />
-      <workItem from="1712919344254" duration="5843000" />
+      <workItem from="1712919344254" duration="6621000" />
     </task>
     <task id="LOCAL-00001" summary="Update">
       <option name="closed" value="true" />
@@ -302,7 +301,15 @@
       <option name="project" value="LOCAL" />
       <updated>1712924868830</updated>
     </task>
-    <option name="localTasksCounter" value="20" />
+    <task id="LOCAL-00020" summary="Update">
+      <option name="closed" value="true" />
+      <created>1712925204209</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1712925204209</updated>
+    </task>
+    <option name="localTasksCounter" value="21" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -313,6 +320,6 @@
     <option name="LAST_COMMIT_MESSAGE" value="Update" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/Student_Attendance_Management_System$Student_Attendance.coverage" NAME="Student_Attendance Coverage Results" MODIFIED="1712925058731" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Student_Attendance_Management_System$Student_Attendance.coverage" NAME="Student_Attendance Coverage Results" MODIFIED="1712925952810" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

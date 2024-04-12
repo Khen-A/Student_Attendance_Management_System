@@ -386,26 +386,13 @@ def student(__usage):
             print("\033[10E", end="")
             clear(100)
             return
-        elif not __usage == "Modify Student Details" and not __usage == "Modify Schedule":
-            print("\033[10E", end="")
-            clear(100)
-            return
     else:
         print(f"│  {"OPTION:":<43}│".center(columns))
-        if __usage == "Modify Schedule" or __usage == "Modify Student Details":
-            print(f"│    {"[1] Check Attendance":<41}│".center(columns))
-            print(f"│    {"[2] Register New Student":<41}│".center(columns))
-            if __usage == "Modify Schedule":
-                print(f"│    {"[3] Modify Student Details":<41}│".center(columns))
-            elif __usage == "Modify Student Details":
-                print(f"│    {"[3] Modify Schedule":<41}│".center(columns))
-            print(f"│    {"[4] Modify Again":<41}│".center(columns))
-        else:
-            print(f"│    {"[1] Check Again":<41}│".center(columns))
-            print(f"│    {"[2] Register New Student":<41}│".center(columns))
-            print(f"│    {"[3] Modify Class Schedule":<41}│".center(columns))
-            print(f"│    {"[4] Modify Student Details":<41}│".center(columns))
-        print(f"│    {"[0] Exit":<41}│".center(columns))
+        print(f"│    {"[1] Home":<41}│".center(columns))
+        print(f"│    {"[2] Register New Student":<41}│".center(columns))
+        print(f"│    {"[3] Modify Class Schedule":<41}│".center(columns))
+        print(f"│    {"[4] Modify Student Details":<41}│".center(columns))
+        print(f"│{"":<45}│".center(columns))
         print(f"│{"":<45}│".center(columns))
         print(f"│{"":<45}│".center(columns))
         print(f"╰{"─" * 45}╯".center(columns))
@@ -426,23 +413,11 @@ def student(__usage):
                 case "3":
                     print("\033[3E", end="")
                     clear(100)
-                    if __usage == "Modify Schedule":
-                        modify_student_details()
-                    elif __usage == "Modify Student Details":
-                        modify_schedule()
-                    else:
-                        modify_schedule()
+                    modify_schedule()
                 case "4":
                     print("\033[3E", end="")
                     clear(100)
-                    if __usage == "Modify Schedule":
-                        modify_schedule()
-                    if __usage == "Modify Student Details":
-                        modify_student_details()
-                    else:
-                        modify_student_details()
-                case "0":
-                    exit()
+                    modify_student_details()
                 case _:
                     print("\033[1F", end="")
                     continue
@@ -1065,7 +1040,7 @@ def register_new_student():
         print("  MSG: Student already registered.")
         print("\033[10F", end="")
         print(f"│  {"OPTION:":<82}│".center(columns))
-        print(f"│  {"   [1] Check Attendance":<82}│".center(columns))
+        print(f"│  {"   [1] Home":<82}│".center(columns))
         print(f"│  {"   [2] Modify Schedule":<82}│".center(columns))
         print(f"│  {"   [3] Modify Student Details":<82}│".center(columns))
         print(f"│  {"   [4] Register Again":<82}│".center(columns))
