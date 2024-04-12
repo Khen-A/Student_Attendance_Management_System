@@ -1161,12 +1161,44 @@ def class_schedule(__schedule):
 
 def modify_student_details():
     global student_details
+    global columns
     global current_str
     global modifying_student_details
 
     if not modifying_student_details:
+        student_details.clear()
         tab_title("MODIFY STUDENT DETAILS")
         student("Modify Student Details")
+        tab_title("MODIFY STUDENT DETAILS")
+
+        print(("╭" + "─" * 84 + "╮").center(columns))
+        print(f"│{"STUDENT DETAILS:":^84}│".center(columns))
+        print(("├" + "─" * 84 + "┤").center(columns))
+        print(("│" + " " * 84 + "│").center(columns))
+        print(f"│  Student No.: {student_details[0]:<69}│".center(columns))
+        print(f"│  Name       : {student_details[1]:<69}│".center(columns))
+        print(f"│  Department : {student_details[2]:<69}│".center(columns))
+        print(f"│  Degree     : {student_details[3]:<69}│".center(columns))
+        print(f"│  Year Level : {student_details[4]:<69}│".center(columns))
+        print(f"│  Signature  : {student_details[5]:<69}│".center(columns))
+        print(("│" + " " * 84 + "│").center(columns))
+        print(("╰" + "─" * 84 + "╯").center(columns))
+
+        print("\n", end="")
+        print(("-" * int(columns - 4)).center(columns))
+        print(f"[Y] Yes{"":<26}[N] No\n".center(columns))
+        while True:
+            key_pressed = input_key(f"{"":<5}Are you sure you want to modify it? ")
+            match key_pressed.upper():
+                case "N":
+                    clear(100)
+                    check_attendance()
+                case "Y":
+                    clear(100)
+                    modifying_student_details = True
+                    modify_student_details()
+                case _:
+                    clear(1)
 
     tab_title("MODIFY STUDENT DETAILS")
 
@@ -1223,44 +1255,28 @@ def modify_student_details():
     if not changes:
         print(f"{"":<5}NOTE: No changes have been made.")
 
-    modifying_student_details = True
+    student_details = [stud_no, stud_name, stud_department, stud_degree, stud_level, stud_signature]
+    update_student(student_details)
+
     print("\n", end="")
     print(("-" * 86).center(90))
-    print(f"[Y] Save{"":<26}[N] Modify Again\n".center(columns))
+    print(f"[S] Save & Modify Class Schedule{"":<20}[N] Modify Again\n".center(columns))
     while True:
-        key_pressed = input_key(f"{"":<5}Are you sure you want to save? ")
+        key_pressed = input_key(f"{"":<5}Are you sure you want to save? Press [Y] to save. ")
         match key_pressed.upper():
             case "Y":
-                student_details = [stud_no, stud_name, stud_department, stud_degree, stud_level, stud_signature]
-                update_student(student_details)
-                # connection.commit()
-                break
-            case "N":
+                connection.commit()
                 clear(100)
-                modify_student_details()
-            case _:
-                clear(1)
-
-    if changes:
-        clear(5)
-    else:
-        clear(6)
-
-    print(f"{"":<5}MSG: Student details were successfully updated.\n")
-    print(("-" * 86).center(90))
-    print(f"[S] Modify Class Schedule{"":<20}[N] Modify Again\n".center(90))
-    while True:
-        key_pressed = input_key(f"{"":<5}Press [Y] to return Home. ")
-        match key_pressed.upper():
-            case "S":
-                modify_schedule()
-            case "N":
-                clear(100)
-                modify_student_details()
-            case "Y":
-                clear(100)
+                print("\033[23E", end="")
+                print("MSG: Student details were successfully updated.".center(columns))
+                print("\033[f", end="")
                 modifying_student_details = False
                 check_attendance()
+            case "N":
+                clear(100)
+                modify_student_details()
+            case "S":
+                modify_schedule()
             case _:
                 clear(1)
 
@@ -1572,8 +1588,8 @@ def modify_schedule():
     class_schedule(_new_schedule)
 
     changes = False
-    for sched in schedule:
-        if sched not in _new_schedule:
+    for sched in _new_schedule:
+        if sched not in schedule:
             changes = True
             break
 
@@ -1602,7 +1618,7 @@ def modify_schedule():
                 center_console_window()
                 print("\033[23E", end="")
                 if modifying_student_details and modifying_class_schedule:
-                    print("MSG: Student details and class schedule successfully updated.".center(columns))
+                    print("MSG: Student details and the class schedule were successfully updated.".center(columns))
                     modifying_student_details = False
                     modifying_class_schedule = False
                 elif modifying_class_schedule:
