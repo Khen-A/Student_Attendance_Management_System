@@ -1255,9 +1255,6 @@ def modify_student_details():
     if not changes:
         print(f"{"":<5}NOTE: No changes have been made.")
 
-    student_details = [stud_no, stud_name, stud_department, stud_degree, stud_level, stud_signature]
-    update_student(student_details)
-
     print("\n", end="")
     print(("-" * 86).center(90))
     print(f"[S] Save & Modify Class Schedule{"":<20}[N] Modify Again\n".center(columns))
@@ -1265,6 +1262,8 @@ def modify_student_details():
         key_pressed = input_key(f"{"":<5}Are you sure you want to save? Press [Y] to save. ")
         match key_pressed.upper():
             case "Y":
+                student_details = [stud_no, stud_name, stud_department, stud_degree, stud_level, stud_signature]
+                update_student(student_details)
                 connection.commit()
                 clear(100)
                 print("\033[23E", end="")
@@ -1276,6 +1275,8 @@ def modify_student_details():
                 clear(100)
                 modify_student_details()
             case "S":
+                student_details = [stud_no, stud_name, stud_department, stud_degree, stud_level, stud_signature]
+                update_student(student_details)
                 modify_schedule()
             case _:
                 clear(1)
