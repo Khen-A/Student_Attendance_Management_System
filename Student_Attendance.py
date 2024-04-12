@@ -19,6 +19,7 @@ schedule = []
 new_schedule = []
 current_str = ""
 columns = int
+in_modify_student_details = False
 modifying_student_details = False
 modifying_class_schedule = False
 
@@ -346,6 +347,7 @@ def attendance(_attendance):
 # Function for getting student details
 def student(__usage):
     global student_details
+    global in_modify_student_details
     student_details.clear()
 
     # Login display design
@@ -418,6 +420,7 @@ def student(__usage):
                 case "4":
                     print("\033[3E", end="")
                     clear(100)
+                    in_modify_student_details = True
                     modify_student_details()
                 case _:
                     print("\033[1F", end="")
@@ -443,19 +446,29 @@ def student(__usage):
 
 # Function for displaying student details
 def _details(_student):
-    stud_name = _student[1]
-    stud_department = _student[2]
-    stud_degree = _student[3]
-    stud_level = _student[4]
-
-    print(f"┆  {Text.Style.Underline + "Student Details:" + Text.NONE:<92}┆".center(columns + 8))
-    print(f"┆{"":<86}┆".center(columns))
-    print(f"┆    Name        : {stud_name:<68}┆".center(columns))
-    print(f"┆    Department  : {stud_department:<68}┆".center(columns))
-    print(f"┆    Degree      : {stud_degree:<68}┆".center(columns))
-    print(f"┆    Level       : {stud_level:<68}┆".center(columns))
-    print(f"┆{"":<86}┆".center(columns))
-    print((f"└" + "–" * 86 + "┘").center(columns))
+    # Checking if user not modifying student details
+    if not modifying_student_details and not in_modify_student_details:
+        print(f"┆  {Text.Style.Underline + "Student Details:" + Text.NONE:<92}┆".center(columns + 8))
+        print(f"┆{"":<86}┆".center(columns))
+        print(f"┆    Name        : {_student[1]:<68}┆".center(columns))
+        print(f"┆    Department  : {_student[2]:<68}┆".center(columns))
+        print(f"┆    Degree      : {_student[3]:<68}┆".center(columns))
+        print(f"┆    Level       : {_student[4]:<68}┆".center(columns))
+        print(f"┆{"":<86}┆".center(columns))
+        print((f"└" + "–" * 86 + "┘").center(columns))
+    elif modifying_student_details or in_modify_student_details:
+        print(("╭" + "─" * 84 + "╮").center(columns))
+        print(f"│{"STUDENT DETAILS:":^84}│".center(columns))
+        print(("├" + "─" * 84 + "┤").center(columns))
+        print(("│" + " " * 84 + "│").center(columns))
+        print(f"│  Student No.: {_student[0]:<69}│".center(columns))
+        print(f"│  Name       : {_student[1]:<69}│".center(columns))
+        print(f"│  Department : {_student[2]:<69}│".center(columns))
+        print(f"│  Degree     : {_student[3]:<69}│".center(columns))
+        print(f"│  Year Level : {_student[4]:<69}│".center(columns))
+        print(f"│  Signature  : {_student[5]:<69}│".center(columns))
+        print(("│" + " " * 84 + "│").center(columns))
+        print(("╰" + "─" * 84 + "╯").center(columns))
 
 
 def check_attendance():
@@ -1140,6 +1153,7 @@ def modify_student_details():
     global student_details
     global columns
     global current_str
+    global in_modify_student_details
     global modifying_student_details
 
     if not modifying_student_details:
@@ -1148,18 +1162,7 @@ def modify_student_details():
         student("Modify Student Details")
         tab_title("MODIFY STUDENT DETAILS")
 
-        print(("╭" + "─" * 84 + "╮").center(columns))
-        print(f"│{"STUDENT DETAILS:":^84}│".center(columns))
-        print(("├" + "─" * 84 + "┤").center(columns))
-        print(("│" + " " * 84 + "│").center(columns))
-        print(f"│  Student No.: {student_details[0]:<69}│".center(columns))
-        print(f"│  Name       : {student_details[1]:<69}│".center(columns))
-        print(f"│  Department : {student_details[2]:<69}│".center(columns))
-        print(f"│  Degree     : {student_details[3]:<69}│".center(columns))
-        print(f"│  Year Level : {student_details[4]:<69}│".center(columns))
-        print(f"│  Signature  : {student_details[5]:<69}│".center(columns))
-        print(("│" + " " * 84 + "│").center(columns))
-        print(("╰" + "─" * 84 + "╯").center(columns))
+        _details(student_details)
 
         print("\n", end="")
         print(("-" * int(columns - 4)).center(columns))
@@ -1169,6 +1172,7 @@ def modify_student_details():
             match key_pressed.upper():
                 case "N":
                     clear(100)
+                    in_modify_student_details = False
                     check_attendance()
                 case "Y":
                     clear(100)
@@ -1186,18 +1190,7 @@ def modify_student_details():
     stud_level = student_details[4]
     stud_signature = student_details[5]
 
-    print(("╭" + "─" * 84 + "╮").center(columns))
-    print(f"│{"STUDENT DETAILS:":^84}│".center(columns))
-    print(("├" + "─" * 84 + "┤").center(columns))
-    print(("│" + " " * 84 + "│").center(columns))
-    print(f"│  Student No.: {stud_no:<69}│".center(columns))
-    print(f"│  Name       : {stud_name:<69}│".center(columns))
-    print(f"│  Department : {stud_department:<69}│".center(columns))
-    print(f"│  Degree     : {stud_degree:<69}│".center(columns))
-    print(f"│  Year Level : {stud_level:<69}│".center(columns))
-    print(f"│  Signature  : {stud_signature:<69}│".center(columns))
-    print(("│" + " " * 84 + "│").center(columns))
-    print(("╰" + "─" * 84 + "╯").center(columns))
+    _details(student_details)
 
     print("\033[7F", end="")
     current_str = stud_name
@@ -1246,6 +1239,7 @@ def modify_student_details():
                 print("\033[23E", end="")
                 print("MSG: Student details were successfully updated.".center(columns))
                 print("\033[f", end="")
+                in_modify_student_details = False
                 modifying_student_details = False
                 check_attendance()
             case "N":
@@ -1413,6 +1407,7 @@ def max_schedule_day(__schedule):
 
 def modify_schedule():
     global columns
+    global in_modify_student_details
     global modifying_student_details
     global modifying_class_schedule
     new_schedule.clear()
@@ -1439,21 +1434,10 @@ def modify_schedule():
 
         if modifying_student_details:
             tab_title("MODIFY STUDENT DETAILS")
-            print(("╭" + "─" * 84 + "╮").center(columns))
-            print(f"│{"STUDENT DETAILS:":^84}│".center(columns))
-            print(("├" + "─" * 84 + "┤").center(columns))
-            print(("│" + " " * 84 + "│").center(columns))
-            print(f"│  Student No.: {student_details[0]:<69}│".center(columns))
-            print(f"│  Name       : {student_details[1]:<69}│".center(columns))
-            print(f"│  Department : {student_details[2]:<69}│".center(columns))
-            print(f"│  Degree     : {student_details[3]:<69}│".center(columns))
-            print(f"│  Year Level : {student_details[4]:<69}│".center(columns))
-            print(f"│  Signature  : {student_details[5]:<69}│".center(columns))
-            print(("│" + " " * 84 + "│").center(columns))
-            print(("╰" + "─" * 84 + "╯").center(columns))
         else:
             tab_title("MODIFY SCHEDULE")
-            _details(student_details)
+
+        _details(student_details)
 
         class_schedule(schedule)
 
@@ -1480,21 +1464,10 @@ def modify_schedule():
 
     if modifying_student_details:
         tab_title("MODIFY STUDENT DETAILS")
-        print(("╭" + "─" * 84 + "╮").center(columns))
-        print(f"│{"STUDENT DETAILS:":^84}│".center(columns))
-        print(("├" + "─" * 84 + "┤").center(columns))
-        print(("│" + " " * 84 + "│").center(columns))
-        print(f"│  Student No.: {student_details[0]:<69}│".center(columns))
-        print(f"│  Name       : {student_details[1]:<69}│".center(columns))
-        print(f"│  Department : {student_details[2]:<69}│".center(columns))
-        print(f"│  Degree     : {student_details[3]:<69}│".center(columns))
-        print(f"│  Year Level : {student_details[4]:<69}│".center(columns))
-        print(f"│  Signature  : {student_details[5]:<69}│".center(columns))
-        print(("│" + " " * 84 + "│").center(columns))
-        print(("╰" + "─" * 84 + "╯").center(columns))
     else:
         tab_title("MODIFY SCHEDULE")
-        _details(student_details)
+
+    _details(student_details)
 
     print(("╭" + "─" * 40 + "╮").center(columns))
     print(f"│{"CLASS SCHEDULE:":^40}│".center(columns))
@@ -1545,23 +1518,12 @@ def modify_schedule():
     center_console_window()
     columns = os.get_terminal_size().columns
 
-    if not modifying_student_details:
-        tab_title("MODIFY SCHEDULE")
-        _details(student_details)
-    else:
+    if modifying_student_details:
         tab_title("MODIFY STUDENT DETAILS")
-        print(("╭" + "─" * 84 + "╮").center(columns))
-        print(f"│{"STUDENT DETAILS:":^84}│".center(columns))
-        print(("├" + "─" * 84 + "┤").center(columns))
-        print(("│" + " " * 84 + "│").center(columns))
-        print(f"│  Student No.: {student_details[0]:<69}│".center(columns))
-        print(f"│  Name       : {student_details[1]:<69}│".center(columns))
-        print(f"│  Department : {student_details[2]:<69}│".center(columns))
-        print(f"│  Degree     : {student_details[3]:<69}│".center(columns))
-        print(f"│  Year Level : {student_details[4]:<69}│".center(columns))
-        print(f"│  Signature  : {student_details[5]:<69}│".center(columns))
-        print(("│" + " " * 84 + "│").center(columns))
-        print(("╰" + "─" * 84 + "╯").center(columns))
+    else:
+        tab_title("MODIFY SCHEDULE")
+
+    _details(student_details)
 
     class_schedule(_new_schedule)
 
@@ -1603,6 +1565,7 @@ def modify_schedule():
                     print("MSG: Class schedule successfully updated.".center(columns))
                     modifying_class_schedule = False
                 print("\033[f", end="")
+                in_modify_student_details = False
                 check_attendance()
             case _:
                 clear(1)
