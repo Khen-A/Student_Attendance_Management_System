@@ -92,8 +92,8 @@ cursor.execute("CREATE TABLE IF NOT EXISTS Student_Info ("
                "_Level       TEXT, "
                "_Signature   TEXT)")
 
-# Creating ClassSchedule table and column
-cursor.execute("CREATE TABLE IF NOT EXISTS ClassSchedule ("
+# Creating Class_Schedule table and column
+cursor.execute("CREATE TABLE IF NOT EXISTS Class_Schedule ("
                "Student_No   TEXT, "
                "_Course      TEXT, "
                "_Day         TEXT, "
@@ -108,6 +108,12 @@ cursor.execute("CREATE TABLE IF NOT EXISTS Attendance ("
                "_Date        TEXT, "
                "_TimeIn      TEXT, "
                "_Status      ANY)")
+
+# Creating Login_Attempt table and column
+cursor.execute("CREATE TABLE IF NOT EXISTS Login_Attempt ("
+               "Student_No   TEXT, "
+               "_Time         TEXT, "
+               "_Count        TEXT)")
 
 # Saving all inquiries
 connection.commit()
@@ -334,7 +340,7 @@ def add_student(_student):
 
 # Function for queuing new class schedule
 def add_schedule(_schedule):
-    cursor.executemany("INSERT INTO ClassSchedule VALUES (?, ?, ?, ?)", _schedule)
+    cursor.executemany("INSERT INTO Class_Schedule VALUES (?, ?, ?, ?)", _schedule)
 
 
 # Function for queuing update student details
@@ -346,6 +352,10 @@ def update_student(_student):
 # Function for queuing attendance
 def attendance(_attendance):
     cursor.executemany("INSERT INTO Attendance VALUES (?, ?, ?, ?, ?, ?, ?)", _attendance)
+
+
+def login_attempt(_student):
+    cursor.executemany("INSERT INTO Login_Attempt VALUES (?, ?, ?)", _student)
 
 
 # Function for getting student details
@@ -505,7 +515,7 @@ def check_attendance():
         current_time = current_time[1:]
 
     # Searching for today class schedule in class schedule database
-    cursor.execute("SELECT * FROM ClassSchedule WHERE Student_No = ? AND _Day = ?",
+    cursor.execute("SELECT * FROM Class_Schedule WHERE Student_No = ? AND _Day = ?",
                    (stud_no, current_day,))
     schedule.extend(cursor.fetchall())  # Store all search class schedule
 
@@ -701,7 +711,7 @@ def check_attendance():
         next_day = days[next_day]
 
         # Searching for next day schedule in class schedule database
-        cursor.execute("SELECT * FROM ClassSchedule WHERE Student_No = ? AND _Day = ?",
+        cursor.execute("SELECT * FROM Class_Schedule WHERE Student_No = ? AND _Day = ?",
                        (stud_no, next_day,))
         next_day_sched = cursor.fetchall()  # Store all search schedule
 
@@ -1440,7 +1450,7 @@ def update_schedule():
             student("Update Schedule")
 
         # Searching for the schedule of the student
-        cursor.execute("SELECT * FROM ClassSchedule WHERE Student_No = ?", (student_details[0],))
+        cursor.execute("SELECT * FROM Class_Schedule WHERE Student_No = ?", (student_details[0],))
         schedule.extend(cursor.fetchall())  # Store it as array list
 
         # Getting the largest total count of schedule
@@ -1599,7 +1609,7 @@ def update_schedule():
                 center_console_window()
                 update_schedule()
             case "Y":
-                cursor.execute("DELETE FROM ClassSchedule WHERE Student_No = ?", (student_details[0],))
+                cursor.execute("DELETE FROM Class_Schedule WHERE Student_No = ?", (student_details[0],))
                 add_schedule(schedule)
                 connection.commit()
                 clear(100)
