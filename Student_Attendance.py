@@ -444,20 +444,86 @@ def student(__usage):
             break
 
     print("\033[3E", end="")
-    while True:  # Validate signature
+
+    current_time = datetime.datetime.now().time().strftime("%I:%M:%S %p")
+
+    cursor.execute("SELECT * FROM Login_Attempt WHERE Student_No = ?", (student_details[0],))  # Searching for student
+    _attempt = [x for item in cursor.fetchall() for x in item[0:6]]  # Saving login attempts as array
+
+    try_count = 0
+
+    if not _attempt:  # If _attempt is empty or no record.
+        # adding _attempt log to login_attempt database
+        time = current_time
+        attempt_count = 3
+        _attempt = [(student_details[0], time, attempt_count)]
+        login_attempt(_attempt)
+        connection.commit()
+    else:  # _attempt already exist
+        time = _attempt[1]
+        attempt_count = _attempt[2]
+
+        # Converting time to 24 hrs and whole number
+        time = convert_to_24hrs(time)
+        current_time = convert_to_24hrs(current_time)
+
+        # Checking for time remaining for log in
+        time_remaining = current_time - time
+        if attempt_count != 0:  # If all attempts are not used. The user needs to retry after 60 seconds.
+            if (60 - time_remaining) > 0:
+                clear(100)
+                print("\033[23E", end="")
+                print(f"MSG: Please try again in {60 - time_remaining} seconds.".center(columns))
+                print("\033[f", end="")
+                check_attendance()
+        else:  # All attempts already used. The user needs to retry after 1 hour.
+            if (3600 - time_remaining) > 0:
+                clear(100)
+                print("\033[23E", end="")
+                print(f"MSG: Please try again in {round((3600 - time_remaining)/60, 2)} minutes."
+                      .center(columns))
+                print("\033[f", end="")
+                check_attendance()
+
+    # Validating signature and try count
+    while try_count < 5:  # If try count is not greater than 5
         print(f"│{"":^45}│".center(columns))
         print("\033[1F", end="")
         key_signature = str(limit_input(f"{"":<21}│    Signature   : ", 25))
-        if key_signature == student_details[5]:
+        if key_signature == student_details[5]:  # If signature is correct
+            cursor.execute("DELETE FROM Login_Attempt WHERE Student_No = ?", (student_details[0],))
+            add_schedule(schedule)
+            connection.commit()
             print("\033[10E", end="")
             clear(100)
             return
-        else:
+        else:  # Signature is wrong
             print("\033[3E", end="")
             print("MSG: Wrong signature. Please try again. ".center(columns))
             print("\033[3F", end="")
+            try_count += 1
             clear(1)
             continue
+    else:  # It will return to check attendance and display message for attempts
+        current_time = datetime.datetime.now().time().strftime("%I:%M:%S %p")
+        attempt_count -= 1
+        _attempt = [student_details[0], current_time, attempt_count]
+        cursor.execute("UPDATE Login_Attempt SET _Time = ?, _Count = ? WHERE Student_No = ?",
+                       _attempt[1:] + [_attempt[0]])
+        connection.commit()
+        clear(100)
+        print("\033[23E", end="")
+        if attempt_count == 0:
+            print(f"MSG: All attempts used. Try again in 1 hour.".center(columns))
+        elif attempt_count == 1:
+            print(f"MSG: Wrong signature. There's only {attempt_count} more attempt to try.".center(columns))
+            print(f"{"     Please try again in 60 seconds.":<58}".center(columns))
+        else:
+            print(f"MSG: Wrong signature. There's only {attempt_count} more attempts to retry.".center(columns))
+            print(f"{"     Please try again in 60 seconds.":<60}".center(columns))
+
+        print("\033[f", end="")
+        check_attendance()
 
 
 # Function for displaying student details
@@ -817,7 +883,11 @@ def validate_time_format(time):
 def convert_to_24hrs(time_str):
     # Convert time string from 12-hour format to minutes
     parts = time_str.split()
-    hour, minute = map(int, parts[0].split(':'))
+    hour, minute, second = 0, 0, 0
+    try:  # If time has a second
+        hour, minute, second = map(int, parts[0].split(':'))
+    except ValueError:
+        hour, minute = map(int, parts[0].split(':'))
 
     if parts[1].upper() == 'PM':  # PM Case
         if hour != 12:
@@ -825,7 +895,7 @@ def convert_to_24hrs(time_str):
     else:  # AM case
         if hour == 12:
             hour = 0
-    return hour * 60 + minute
+    return hour * 3600 + minute * 60 + second
 
 
 # Function for checking conflicts in the class schedule

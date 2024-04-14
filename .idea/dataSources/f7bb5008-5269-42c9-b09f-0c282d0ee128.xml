@@ -499,7 +499,7 @@
     <routine id="190" parent="1" name="fts5"/>
     <schema id="191" parent="1" name="main">
       <Current>1</Current>
-      <LastIntrospectionLocalTimestamp>2024-04-13.18:22:42</LastIntrospectionLocalTimestamp>
+      <LastIntrospectionLocalTimestamp>2024-04-14.06:30:55</LastIntrospectionLocalTimestamp>
     </schema>
     <argument id="192" parent="16">
       <ArgumentDirection>R</ArgumentDirection>
@@ -1591,110 +1591,123 @@
       <Position>1</Position>
     </argument>
     <table id="555" parent="191" name="Attendance"/>
-    <table id="556" parent="191" name="ClassSchedule"/>
-    <table id="557" parent="191" name="Student_Info"/>
-    <table id="558" parent="191" name="sqlite_master">
+    <table id="556" parent="191" name="Class_Schedule"/>
+    <table id="557" parent="191" name="Login_Attempt"/>
+    <table id="558" parent="191" name="Student_Info"/>
+    <table id="559" parent="191" name="sqlite_master">
       <System>1</System>
     </table>
-    <column id="559" parent="555" name="Student_No">
+    <column id="560" parent="555" name="Student_No">
       <DasType>TEXT|0s</DasType>
       <Position>1</Position>
     </column>
-    <column id="560" parent="555" name="_Course">
+    <column id="561" parent="555" name="_Course">
       <DasType>TEXT|0s</DasType>
       <Position>2</Position>
     </column>
-    <column id="561" parent="555" name="_Day">
+    <column id="562" parent="555" name="_Day">
       <DasType>TEXT|0s</DasType>
       <Position>3</Position>
     </column>
-    <column id="562" parent="555" name="_Time">
+    <column id="563" parent="555" name="_Time">
       <DasType>TEXT|0s</DasType>
       <Position>4</Position>
     </column>
-    <column id="563" parent="555" name="_Date">
+    <column id="564" parent="555" name="_Date">
       <DasType>TEXT|0s</DasType>
       <Position>5</Position>
     </column>
-    <column id="564" parent="555" name="_TimeIn">
+    <column id="565" parent="555" name="_TimeIn">
       <DasType>TEXT|0s</DasType>
       <Position>6</Position>
     </column>
-    <column id="565" parent="555" name="_Status">
+    <column id="566" parent="555" name="_Status">
       <DasType>ANY|0s</DasType>
       <Position>7</Position>
     </column>
-    <column id="566" parent="556" name="Student_No">
+    <column id="567" parent="556" name="Student_No">
       <DasType>TEXT|0s</DasType>
       <Position>1</Position>
     </column>
-    <column id="567" parent="556" name="_Course">
+    <column id="568" parent="556" name="_Course">
       <DasType>TEXT|0s</DasType>
       <Position>2</Position>
     </column>
-    <column id="568" parent="556" name="_Day">
+    <column id="569" parent="556" name="_Day">
       <DasType>TEXT|0s</DasType>
       <Position>3</Position>
     </column>
-    <column id="569" parent="556" name="_Time">
+    <column id="570" parent="556" name="_Time">
       <DasType>TEXT|0s</DasType>
       <Position>4</Position>
     </column>
-    <column id="570" parent="557" name="Student_No">
+    <column id="571" parent="557" name="Student_No">
       <DasType>TEXT|0s</DasType>
       <Position>1</Position>
     </column>
-    <column id="571" parent="557" name="_Name">
+    <column id="572" parent="557" name="_Time">
       <DasType>TEXT|0s</DasType>
       <Position>2</Position>
     </column>
-    <column id="572" parent="557" name="_Department">
+    <column id="573" parent="557" name="_Count">
+      <DasType>INT|0s</DasType>
+      <Position>3</Position>
+    </column>
+    <column id="574" parent="558" name="Student_No">
+      <DasType>TEXT|0s</DasType>
+      <Position>1</Position>
+    </column>
+    <column id="575" parent="558" name="_Name">
+      <DasType>TEXT|0s</DasType>
+      <Position>2</Position>
+    </column>
+    <column id="576" parent="558" name="_Department">
       <DasType>TEXT|0s</DasType>
       <Position>3</Position>
     </column>
-    <column id="573" parent="557" name="_Degree">
+    <column id="577" parent="558" name="_Degree">
       <DasType>TEXT|0s</DasType>
       <Position>4</Position>
     </column>
-    <column id="574" parent="557" name="_Level">
+    <column id="578" parent="558" name="_Level">
       <DasType>TEXT|0s</DasType>
       <Position>5</Position>
     </column>
-    <column id="575" parent="557" name="_Signature">
+    <column id="579" parent="558" name="_Signature">
       <DasType>TEXT|0s</DasType>
       <Position>6</Position>
     </column>
-    <index id="576" parent="557" name="sqlite_autoindex_Student_Info_1">
+    <index id="580" parent="558" name="sqlite_autoindex_Student_Info_1">
       <ColNames>Student_No</ColNames>
       <NameSurrogate>1</NameSurrogate>
       <Unique>1</Unique>
     </index>
-    <key id="577" parent="557">
+    <key id="581" parent="558">
       <ColNames>Student_No</ColNames>
       <Primary>1</Primary>
       <UnderlyingIndexName>sqlite_autoindex_Student_Info_1</UnderlyingIndexName>
     </key>
-    <key id="578" parent="557">
+    <key id="582" parent="558">
       <ColNames>Student_No</ColNames>
       <UnderlyingIndexName>sqlite_autoindex_Student_Info_1</UnderlyingIndexName>
     </key>
-    <column id="579" parent="558" name="type">
+    <column id="583" parent="559" name="type">
       <DasType>TEXT|0s</DasType>
       <Position>1</Position>
     </column>
-    <column id="580" parent="558" name="name">
+    <column id="584" parent="559" name="name">
       <DasType>TEXT|0s</DasType>
       <Position>2</Position>
     </column>
-    <column id="581" parent="558" name="tbl_name">
+    <column id="585" parent="559" name="tbl_name">
       <DasType>TEXT|0s</DasType>
       <Position>3</Position>
     </column>
-    <column id="582" parent="558" name="rootpage">
+    <column id="586" parent="559" name="rootpage">
       <DasType>INT|0s</DasType>
       <Position>4</Position>
     </column>
-    <column id="583" parent="558" name="sql">
+    <column id="587" parent="559" name="sql">
       <DasType>TEXT|0s</DasType>
       <Position>5</Position>
     </column>
