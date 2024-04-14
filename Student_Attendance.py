@@ -12,6 +12,7 @@ import os
 import sys
 import re
 
+
 # Initialize variable
 student_details = []
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
