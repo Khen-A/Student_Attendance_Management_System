@@ -11,7 +11,6 @@ import ctypes.wintypes
 import os
 import sys
 
-
 # Initialize variable
 student_details = []
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
@@ -171,7 +170,7 @@ def is_single_instance(_title):
 
         # Bring the window to the foreground
         if hwnd != 0:
-            ctypes.windll.user32.ShowWindow(hwnd, 9)  # If console is in minimize it will show
+            ctypes.windll.user32.ShowWindow(hwnd, 1)  # If console is in minimize it will show
             ctypes.windll.user32.SetForegroundWindow(hwnd)
 
         return False
@@ -347,9 +346,9 @@ def tab_title(title):
     # Display tab header and title
     print(Text.Color.Foreground.Green, end="")
     print(("╔" + "═" * int(columns - 2) + "╗").center(columns))
-    print(("║" + Text.Color.Foreground.Yellow + Text.Style.Bold + f"{title:^{columns-2}}" +
+    print(("║" + Text.Color.Foreground.Yellow + Text.Style.Bold + f"{title:^{columns - 2}}" +
            Text.NONE + Text.Color.Foreground.Green + "║").center(columns + 10))
-    print(("║" + Text.Color.Foreground.Light_Cyan + f"{current_date + " " * int(columns - 40) + 
+    print(("║" + Text.Color.Foreground.Light_Cyan + f"{current_date + " " * int(columns - 40) +
                                                        current_time:^{columns - 2}}"
            + Text.Color.Foreground.Green + "║").center(columns + 10))
     print(Text.Color.Foreground.Green, end="")
@@ -504,7 +503,7 @@ def student(__usage):
             if (3600 - time_remaining) > 0:
                 clear(100)
                 print("\033[23E", end="")
-                print(f"MSG: Please try again in {round((3600 - time_remaining)/60, 2)} minutes."
+                print(f"MSG: Please try again in {round((3600 - time_remaining) / 60, 2)} minutes."
                       .center(columns))
                 print("\033[f", end="")
                 check_attendance()
@@ -601,7 +600,7 @@ def check_attendance():
     current_day = datetime.now().date().strftime("%A")
     current_time = datetime.now().time().strftime("%I:%M %p")
 
-    if current_time.startswith("0"):    # Removing the starting 0 in hour
+    if current_time.startswith("0"):  # Removing the starting 0 in hour
         current_time = current_time[1:]
 
     # Searching for today class schedule in class schedule database
@@ -687,7 +686,7 @@ def check_attendance():
                 start_time = convert_to_24hrs(attn_log[3].split(" - ")[0])
                 current_time = datetime.now().time().strftime("%I:%M %p")
                 time_now = convert_to_24hrs(current_time)
-                time_interval = int((time_now - start_time)/60)
+                time_interval = int((time_now - start_time) / 60)
 
                 # Condition for Present, Absent, and Late
                 if status == "PENDING":
@@ -698,7 +697,7 @@ def check_attendance():
                     else:
                         status = "PRESENT"
 
-                if current_time.startswith("0"):    # Removing the starting 0 in hour
+                if current_time.startswith("0"):  # Removing the starting 0 in hour
                     current_time = current_time[1:]
 
                 # Storing for now in attendance_log variable as array
@@ -857,7 +856,7 @@ def class_schedule(__schedule):
         for _schedule in __schedule:
             day = _schedule[2]  # Save the day as array
 
-            if day not in day_schedules:   # Checking if day is already exist in day_schedules
+            if day not in day_schedules:  # Checking if day is already exist in day_schedules
                 day_schedules[day] = []
 
             if len(_schedule[1]) > 11:  # Checking if the course title is greater than 11 text
@@ -1336,7 +1335,7 @@ def register_new_student():
         os.system(f"mode con cols={120} lines={45}")
 
     center_console_window()  # Center console
-    columns = os.get_terminal_size().columns   # Save the size width
+    columns = os.get_terminal_size().columns  # Save the size width
     clear(100)  # Clear display
     tab_title("REGISTER NEW STUDENT")
 
@@ -1745,8 +1744,8 @@ def update_schedule():
 
 
 if __name__ == "__main__":
-    run_as_administrator()
     console_title = "Student Attendance Management System"
+    run_as_administrator()
     set_console_title(console_title)
     if not is_single_instance(console_title):
         exit()
