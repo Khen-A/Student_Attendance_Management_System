@@ -608,9 +608,8 @@ def check_attendance():
                 attendance_log.clear()
 
         if start_time <= time_now <= end_time:  # Searching for current schedule
-            _schedule = (stud_no, course_title, day, time, current_date, current_time)
             # Store the current schedule to attendance log
-            attendance_log.append(_schedule)
+            attendance_log.append([stud_no, course_title, day, time, current_date, current_time])
 
             # Checking for next schedule
             if index + 1 < len(schedule):
@@ -620,6 +619,7 @@ def check_attendance():
             break
 
     # Checking now for attendance
+    time_interval = 0
     _attendance = []
     for attn, (stud_no, course_title, day, time, current_date, current_time) in enumerate(attendance_log):
         # Searching for current attendance in attendance
@@ -630,8 +630,8 @@ def check_attendance():
 
         # If it is not already signed, it will ask user to input their signature.
         while not _attendance:
-            max_entry = 3  # Allow user to input only 3 attempts for their signature.
             for attn_log in attendance_log:
+                # Display the current schedule course
                 print("┌─────────────────────────────────────────────┐".center(columns))
                 print(f"│{"SCHEDULE NOW":^45}│".center(columns))
                 print("├─────────────────────────────────────────────┤".center(columns))
@@ -639,50 +639,40 @@ def check_attendance():
                 print(f"│ Time         : {attn_log[3]:<29}│".center(columns))
                 print(f"│ Status       : {status:<29}│".center(columns))
                 print("├─────────────────────────────────────────────┤".center(columns))
+                print("│                                             │".center(columns))
+                print("└─────────────────────────────────────────────┘".center(columns))
+                print("NOTE: If you're excused, just type EXCUSE.".center(columns))
+                print("\033[3F", end="")
+                key_signature = str(limit_input(f"{"":<21}│ Signature: ", 25))
 
-                # If user reach all attempts their attendance will be marked as absent
-                while max_entry > 0:
-                    print("│                                             │".center(columns))
-                    print("└─────────────────────────────────────────────┘".center(columns))
-                    print("\033[2F", end="")
-                    key_signature = str(limit_input(f"{"":<21}│ Signature: ", 25))
-                    if key_signature == "":
-                        print("\r")
-                    else:
-                        if key_signature == stud_signature:
-                            break
-                        else:
-                            print("\033[3E", end="")
-                            if max_entry > 2:
-                                print(f"{"":<21}MSG: Wrong signature. You have {max_entry - 1} attempt(s) left.")
-                                print("\033[2F", end="")
-                                clear(1)
-                                print("\033[1F", end="")
-                            else:
-                                print(f"{"":<21}MSG: Wrong signature. You have {max_entry - 1} attempt(s) left.")
-                                print(f"{"":<21}     Otherwise, You will be marked as ABSENT. ")
-                                print("\033[3F", end="")
-                                clear(1)
-                                print("\033[1F", end="")
-                            max_entry -= 1
+                # Checking if the signature is correct
+                if key_signature.upper() == "EXCUSE":  # Allow the user to excuse attendance.
+                    status = "PENDING EXCUSE"
+                    pass
+                elif key_signature != stud_signature:
+                    clear(100)
+                    print("\033[23E", end="")
+                    print("MSG: You entered the wrong signature!".center(columns))
+                    print("\033[f", end="")
+                    check_attendance()
 
                 # Preparing for queuing the attendance
                 attendance_log.clear()
 
-                # Splitting and converting time into real number
+                # Calculate the time interval for checking attendance
+                start_time = convert_to_24hrs(attn_log[3].split(" - ")[0])
                 current_time = datetime.now().time().strftime("%I:%M %p")
-                start_time, end_time = map(convert_to_24hrs, attn_log[3].split(" - "))
                 time_now = convert_to_24hrs(current_time)
+                time_interval = int((time_now - start_time)/60)
 
                 # Condition for Present, Absent, and Late
-                if max_entry == 0:
-                    status = "ABSENT"
-                elif 5 <= (time_now - start_time) <= 15:
-                    status = "LATE"
-                elif (time_now - start_time) > 15:
-                    status = "ABSENT"
-                else:
-                    status = "PRESENT"
+                if status == "PENDING":
+                    if 5 <= time_interval <= 15:
+                        status = "LATE"
+                    elif time_interval > 15:
+                        status = "ABSENT"
+                    else:
+                        status = "PRESENT"
 
                 if current_time.startswith("0"):    # Removing the starting 0 in hour
                     current_time = current_time[1:]
@@ -699,13 +689,8 @@ def check_attendance():
                 _attendance = attendance_log
 
                 # Clearing and updating console display
-                if max_entry == 0:
-                    print("\033[2E", end="")
-                    clear(9)
-                else:
-                    print("\033[2E", end="")
-                    clear(9)
-
+                print("\033[2E", end="")
+                clear(9)
                 print("\033[f", end="")
                 tab_title("CHECK ATTENDANCE")
                 print("\033[8E", end="")
@@ -795,7 +780,22 @@ def check_attendance():
             print(f"│{"No Schedule":^45}│".center(columns))
         print("└─────────────────────────────────────────────┘".center(columns))
 
-    print("\n\n")
+    # Display message
+    if attendance_log:
+        if status == "ABSENT":
+            print(f"MSG: You've been marked as absent for being {time_interval} minutes late.".center(columns))
+        elif status == "LATE":
+            print(f"MSG: You've been marked as late for being {time_interval} minutes late.".center(columns))
+        elif status == "PENDING EXCUSE":
+            print("\n", end="")
+            print(f"{"NOTE:":<80}".center(columns))
+            print("     Your  request  is  now  being  processed,  and  it  will  notify  your".center(columns))
+            print("instructor.  Please provide  a valid excuse  letter to  your instructor  so".center(columns))
+            print("they   can  consider  your  request.  Ensure  that  your  letter   includes".center(columns))
+            print("a  clear  explanation   for  the  need  for  an  excuse  and  provides  any".center(columns))
+            print("necessary  supporting  documentation.  Thank you...                        ".center(columns))
+
+    print("\n")
     print(("-" * 80).center(columns))
     while True:
         user = input_key("      Press [N] to check again or [Y] to exit: ")
