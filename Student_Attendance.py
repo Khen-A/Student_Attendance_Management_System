@@ -194,11 +194,8 @@ def set_window_style():
     hwnd = ctypes.windll.kernel32.GetConsoleWindow()
 
     # update the window style to remove the sizing border
-    if hwnd != 0:
-        style = ctypes.windll.user32.GetWindowLongW(hwnd, gwl_style)
-        style &= ~ws_sizebox
-        style &= ~ws_maximizebox
-        ctypes.windll.user32.SetWindowLongW(hwnd, gwl_style, style)
+    style = ctypes.windll.user32.GetWindowLongW(hwnd, gwl_style) & ~ws_sizebox & ~ws_maximizebox
+    ctypes.windll.user32.SetWindowLongW(hwnd, gwl_style, style)
 
 
 # Function for clearing/deleting a line
@@ -1744,13 +1741,18 @@ def update_schedule():
 
 
 if __name__ == "__main__":
+    # Title of console
     console_title = "Student Attendance Management System"
-    run_as_administrator()
-    set_console_title(console_title)
+
+    run_as_administrator()  # Request for administration privilege
+
+    # Check for single instances
     if not is_single_instance(console_title):
         exit()
-    set_window_style()
-    set_console_size(90, 45)
-    columns = os.get_terminal_size().columns
-    center_console_window()
-    check_attendance()
+
+    set_console_title(console_title)   # Set the title of console
+    set_console_size(90, 45)  # Resizing of console
+    columns = os.get_terminal_size().columns   # Save the new column size
+    center_console_window()   # Align the console to center
+    set_window_style()  # Applying the console styles
+    check_attendance()  # Calling now the check_attendance function
