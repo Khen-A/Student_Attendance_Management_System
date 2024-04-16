@@ -155,6 +155,30 @@ def set_console_title(title):
     ctypes.windll.kernel32.SetConsoleTitleW(title)
 
 
+# Function for single instance console application
+def is_single_instance(_title):
+    # Define necessary Windows types
+    lpctstr = ctypes.c_wchar_p
+
+    # Create a mutex
+    mutex_handle = ctypes.windll.kernel32.CreateMutexW(None, True, lpctstr(_title))
+
+    # Check if the mutex already exists
+    if ctypes.windll.kernel32.GetLastError() == 183 or mutex_handle is None:  # ERROR_ALREADY_EXISTS = 183
+
+        # Find the window by title
+        hwnd = ctypes.windll.user32.FindWindowW(None, lpctstr(_title))
+
+        # Bring the window to the foreground
+        if hwnd != 0:
+            ctypes.windll.user32.ShowWindow(hwnd, 9)  # If console is in minimize it will show
+            ctypes.windll.user32.SetForegroundWindow(hwnd)
+
+        return False
+
+    return True
+
+
 # Function for resizing console
 def set_console_size(width: int, height: int):
     os.system(f"mode con cols={width} lines={height}")
@@ -1722,7 +1746,10 @@ def update_schedule():
 
 if __name__ == "__main__":
     run_as_administrator()
-    set_console_title("Student Attendance Management System")
+    console_title = "Student Attendance Management System"
+    set_console_title(console_title)
+    if not is_single_instance(console_title):
+        exit()
     set_window_style()
     set_console_size(90, 45)
     columns = os.get_terminal_size().columns
