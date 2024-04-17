@@ -5,12 +5,11 @@
 
 # Import library
 import sqlite3
-import datetime
+from datetime import datetime
 import msvcrt
 import ctypes.wintypes
 import os
 import sys
-import re
 
 
 # Initialize variable
@@ -318,8 +317,8 @@ def int_input(_prompt: str, _range: int):
 
 # Function tab header and title
 def tab_title(title):
-    current_date = datetime.datetime.now().date().strftime("%B %d, %Y | %A")  # Get the current date
-    current_time = datetime.datetime.now().time().strftime("%I:%M %p")  # Get the current time
+    current_date = datetime.now().date().strftime("%B %d, %Y | %A")  # Get the current date
+    current_time = datetime.now().time().strftime("%I:%M %p")  # Get the current time
 
     # Display tab header and title
     print(Text.Color.Foreground.Green, end="")
@@ -446,7 +445,7 @@ def student(__usage):
 
     print("\033[3E", end="")
 
-    current_time = datetime.datetime.now().time().strftime("%I:%M:%S %p")
+    current_time = datetime.now().time().strftime("%I:%M:%S %p")
 
     cursor.execute("SELECT * FROM Login_Attempt WHERE Student_No = ?", (student_details[0],))  # Searching for student
     _attempt = [x for item in cursor.fetchall() for x in item[0:6]]  # Saving login attempts as array
@@ -506,7 +505,7 @@ def student(__usage):
             clear(1)
             continue
     else:  # It will return to check attendance and display message for attempts
-        current_time = datetime.datetime.now().time().strftime("%I:%M:%S %p")
+        current_time = datetime.now().time().strftime("%I:%M:%S %p")
         attempt_count -= 1
         _attempt = [student_details[0], current_time, attempt_count]
         cursor.execute("UPDATE Login_Attempt SET _Time = ?, _Count = ? WHERE Student_No = ?",
@@ -574,9 +573,9 @@ def check_attendance():
     _details(student_details)
 
     # Getting current date and time
-    current_date = datetime.datetime.now().date().strftime("%m/%d/%y")
-    current_day = datetime.datetime.now().date().strftime("%A")
-    current_time = datetime.datetime.now().time().strftime("%I:%M %p")
+    current_date = datetime.now().date().strftime("%m/%d/%y")
+    current_day = datetime.now().date().strftime("%A")
+    current_time = datetime.now().time().strftime("%I:%M %p")
 
     if current_time.startswith("0"):    # Removing the starting 0 in hour
         current_time = current_time[1:]
@@ -587,7 +586,7 @@ def check_attendance():
     schedule.extend(cursor.fetchall())  # Store all search class schedule
 
     # Checking for current schedule
-    for index, (stud_no, course, day, time) in enumerate(schedule):
+    for index, (stud_no, course_title, day, time) in enumerate(schedule):
         start_time, end_time = time.split(" - ")
 
         start_time = convert_to_24hrs(start_time)
@@ -599,17 +598,17 @@ def check_attendance():
             # Searching for skip schedule
             cursor.execute("SELECT * FROM Attendance WHERE Student_No = ? AND _Course = ? "
                            "AND _Day = ? AND _Time = ? AND _Date = ?",
-                           (stud_no, course, day, time, current_date))
+                           (stud_no, course_title, day, time, current_date))
             attn_log = cursor.fetchall()  # Store the search schedule
             if not attn_log:
                 # Store the schedule to attendance log
-                attendance_log.append((stud_no, course, day, time, current_date, "N/A", "ABSENT"))
+                attendance_log.append((stud_no, course_title, day, time, current_date, "N/A", "ABSENT"))
                 attendance(attendance_log)
                 connection.commit()
                 attendance_log.clear()
 
         if start_time <= time_now <= end_time:  # Searching for current schedule
-            _schedule = (stud_no, course, day, time, current_date, current_time)
+            _schedule = (stud_no, course_title, day, time, current_date, current_time)
             # Store the current schedule to attendance log
             attendance_log.append(_schedule)
 
@@ -622,11 +621,11 @@ def check_attendance():
 
     # Checking now for attendance
     _attendance = []
-    for attn, (stud_no, course, day, time, current_date, current_time) in enumerate(attendance_log):
+    for attn, (stud_no, course_title, day, time, current_date, current_time) in enumerate(attendance_log):
         # Searching for current attendance in attendance
         cursor.execute("SELECT * FROM Attendance WHERE Student_No = ? AND _Course = ? "
                        "AND _Day = ? AND _Time = ? AND _Date = ?",
-                       (stud_no, course, day, time, current_date))
+                       (stud_no, course_title, day, time, current_date))
         _attendance = cursor.fetchall()  # Store all search schedule
 
         # If it is not already signed, it will ask user to input their signature.
@@ -671,7 +670,7 @@ def check_attendance():
                 attendance_log.clear()
 
                 # Splitting and converting time into real number
-                current_time = datetime.datetime.now().time().strftime("%I:%M %p")
+                current_time = datetime.now().time().strftime("%I:%M %p")
                 start_time, end_time = map(convert_to_24hrs, attn_log[3].split(" - "))
                 time_now = convert_to_24hrs(current_time)
 
@@ -713,14 +712,14 @@ def check_attendance():
 
     # Searching again for next
     if not today_next_schedule_found:
-        for index, (stud_no, course, day, time) in enumerate(schedule):
+        for index, (stud_no, course_title, day, time) in enumerate(schedule):
             next_start_time, next_end_time = time.split(" - ")
 
             next_start_time = convert_to_24hrs(next_start_time)
             time_now = convert_to_24hrs(current_time)
 
             if next_start_time >= time_now:
-                schedule[index] = (stud_no, course, day, time)
+                schedule[index] = (stud_no, course_title, day, time)
                 next_schedule.append(schedule[index])
                 today_next_schedule_found = True
                 break
@@ -757,11 +756,11 @@ def check_attendance():
             if schedule:
                 print("├───────────────────┼───────────────────────┼────────────┼──────────────┤"
                       .center(columns))
-                for attn, (stud_no, course, day, time) in enumerate(schedule):
+                for attn, (stud_no, course_title, day, time) in enumerate(schedule):
                     # Searching for all attendance in attendance database
                     cursor.execute("SELECT * FROM Attendance WHERE Student_No = ? AND _Course = ? "
                                    "AND _Day = ? AND _Time = ? AND _Date = ?",
-                                   (stud_no, course, day, time, current_date))
+                                   (stud_no, course_title, day, time, current_date))
                     _attendance = cursor.fetchall()  # Store all search schedule
                     if _attendance:
                         for log in _attendance:
@@ -815,6 +814,7 @@ def check_attendance():
 def class_schedule(__schedule):
     # Group schedules by day
     day_schedules = {}
+
     # Display the table header
     print(("╭" + "─" * 111 + "╮").center(columns))
     print(f"│{"CLASS SCHEDULE":^111}│".center(columns))
@@ -828,12 +828,20 @@ def class_schedule(__schedule):
         f"├{"─" * 15:^15}┼{"─" * 15:^15}┼{"─" * 15:^15}┼{"─" * 15:^15}┼{"─" * 15:^15}┼{"─" * 15:^15}┼{"─" * 15:^15}┤"
         .center(columns))
 
+    # Checking for schedule
     if __schedule:
-        for entry in __schedule:
-            day = entry[2]
-            if day not in day_schedules:
+        for _schedule in __schedule:
+            day = _schedule[2]  # Save the day as array
+
+            if day not in day_schedules:   # Checking if day is already exist in day_schedules
                 day_schedules[day] = []
-            day_schedules[day].append((entry[1], entry[3]))
+
+            if len(_schedule[1]) > 11:  # Checking if the course title is greater than 11 text
+                course_title = _schedule[1][:9] + ".."  # Trim the course title and adding two dot
+            else:
+                course_title = _schedule[1]
+
+            day_schedules[day].append((course_title, _schedule[3]))
 
         # Get the maximum number of schedules for any day
         max_schedules = max(len(schedules) for schedules in day_schedules.values())
@@ -843,9 +851,9 @@ def class_schedule(__schedule):
             day_schedule = []
             for day in days:
                 if day in day_schedules and len(day_schedules[day]) > i:
-                    course, time = day_schedules[day][i]
+                    course_title, time = day_schedules[day][i]
                     start, end = time.split(" - ")
-                    day_schedule.append((course, start, end))
+                    day_schedule.append((course_title, start, end))
                 else:
                     day_schedule.append(("", "", ""))
             print(f"│{day_schedule[0][0]:^15}│{day_schedule[1][0]:^15}│{day_schedule[2][0]:^15}"
@@ -870,14 +878,22 @@ def class_schedule(__schedule):
 
 # Function for validating the time format
 def validate_time_format(time):
-    # Define the regex pattern to match the time format
-    pattern = r'^\d{1,2}:\d{2} [AP]M - \d{1,2}:\d{2} [AP]M$'
+    # Split the time into two parts
+    _time = time.split(" - ")
 
-    # Check if the input matches the pattern
-    if re.match(pattern, time):
-        return True
-    else:
+    # Check if the time string has two parts
+    if len(_time) != 2:
         return False
+
+    # Checking for the time format
+    for time in _time:
+        try:
+            datetime.strptime(time, "%I:%M %p")
+        except ValueError:
+            return False
+
+    # Return to True if the input time format is correct
+    return True
 
 
 # Function for converting time from 12 hours to 24 hours
@@ -922,7 +938,7 @@ def check_conflict(schedules, day, time):
 def sort_schedule(schedule_item):
     day_str, time_str = schedule_item[2], schedule_item[3]
     day_num = str(days.index(day_str) + 1)
-    start_time = datetime.datetime.strptime(time_str.split(" - ")[0], "%I:%M %p")
+    start_time = datetime.strptime(time_str.split(" - ")[0], "%I:%M %p")
     return day_num, start_time
 
 
