@@ -1523,6 +1523,7 @@ def update_student_details():
 def update_schedule():
     global columns
     global schedule
+    global new_schedule
     global in_update_student_details
     global updating_student_details
     global updating_class_schedule
@@ -1643,14 +1644,14 @@ def update_schedule():
             new_schedule.append(sched)
 
     # Sorting the schedule
-    schedule = sorted(new_schedule, key=sort_schedule)
+    new_schedule = sorted(new_schedule, key=sort_schedule)
 
     # If registering_new_student it will return to registration
     if registering_new_student:
         return
 
     # Getting the largest total count of schedule
-    max_sched = max_schedule_day(schedule)
+    max_sched = max_schedule_day(new_schedule)
     if max_sched == 6:  # If the total count is equal to 6 it will resize the console height
         os.system(f"mode con cols={120} lines={53}")
     else:  # Else the console will resize the width only
@@ -1669,11 +1670,11 @@ def update_schedule():
     _details(student_details)
 
     # Display the new class schedule
-    class_schedule(schedule)
+    class_schedule(new_schedule)
 
     # Checking now if no schedule has been modified
     changes = False
-    for sched in schedule:
+    for sched in new_schedule:
         if sched not in schedule:
             changes = True
             break
@@ -1697,7 +1698,7 @@ def update_schedule():
                 update_schedule()
             case "Y":
                 cursor.execute("DELETE FROM Class_Schedule WHERE Student_No = ?", (student_details[0],))
-                add_schedule(schedule)
+                add_schedule(new_schedule)
                 connection.commit()
                 clear(100)
                 os.system(f"mode con cols={90} lines={45}")
