@@ -22,6 +22,7 @@ days_of_week = ""
 current_str = ""
 data = ""
 columns = int
+checking_attendance = False
 in_register_new_student = False
 in_update_student_details = False
 in_updating_class_schedule = False
@@ -597,6 +598,7 @@ def _details(_student):
 
 # Function for checking attendance
 def check_attendance():
+    global checking_attendance
     schedule = []
     attendance_log = []
     next_schedule = []
@@ -605,9 +607,10 @@ def check_attendance():
 
     tab_title("CHECK ATTENDANCE")
 
-    student("Check Attendance")
+    if not checking_attendance:
+        student("Check Attendance")
 
-    tab_title("CHECK ATTENDANCE")
+        tab_title("CHECK ATTENDANCE")
 
     stud_no = student_details[0]
     stud_signature = student_details[5]
@@ -773,15 +776,18 @@ def check_attendance():
             print(f"│ Course Title : {x[1]:<29}│".center(columns))
             print(f"│ Time         : {x[3]:<29}│".center(columns))
             print("└─────────────────────────────────────────────┘".center(columns))
-    else:  # Else if there's no next schedule found. It will display all schedules within the day.
-        if not attendance_log:  # Checking for attendance_log if it has no value
-            print("┌───────────────────────────────────────────────────────────────────────┐".center(columns))
-            print(f"│{"SCHEDULE TODAY":^71}│".center(columns))
-            print("├───────────────────┬───────────────────────┬────────────┬──────────────┤".center(columns))
-            print((f"│{"COURSE TITLE":^19}".ljust(19) + f"│{"TIME":^23}".ljust(23) +
-                   f"│{"STATUS":^12}".ljust(12) + f"│{"TIME IN":^14}".ljust(14) + "│").center(columns))
+    else:  # Else if there's no next schedule found. It will display all schedules on that day.
+        attendance_count = 0
+        if not attendance_log:  # Checking for attendance_log if it is not null array
+            # Table title
+            print("┌──────────────────────────────────────────────────────────────────────────┐".center(columns))
+            print(f"│{"SCHEDULE TODAY":^74}│".center(columns))
+            print("├────────────────────┬───────────────────────┬──────────────┬──────────────┤".center(columns))
+
+            # Column title
+            print(f"│{"COURSE TITLE":^20}│{"TIME":^23}│{"STATUS":^14}│{"TIME IN":^14}│".center(columns))
             if schedule:
-                print("├───────────────────┼───────────────────────┼────────────┼──────────────┤"
+                print("├────────────────────┼───────────────────────┼──────────────┼──────────────┤"
                       .center(columns))
                 for attn, (stud_no, course_title, day, time) in enumerate(schedule):
                     # Searching for all attendance in attendance database
@@ -791,14 +797,20 @@ def check_attendance():
                     _attendance = cursor.fetchall()  # Store all search schedule
                     if _attendance:
                         for log in _attendance:
-                            print((f"│ {log[1]}".ljust(20) + f"│ {log[3]}".ljust(24) +
-                                   f"│{log[6]:^12}".ljust(12) + f"│{log[5]:^14}".ljust(14) + "│").center(columns))
-                print("└───────────────────┴───────────────────────┴────────────┴──────────────┘"
+                            if len(log[1]) > 18:
+                                course_title = log[1][:16] + ".."
+                            else:
+                                course_title = log[1]
+                            print(f"│{" " + course_title:<20}│{" " + log[3]:^23}"
+                                  f"│{log[6]:^14}│{log[5]:^14}│".center(columns))
+
+                    attendance_count += 1
+                print("└────────────────────┴───────────────────────┴──────────────┴──────────────┘"
                       .center(columns))
             else:
-                print("├───────────────────┴───────────────────────┴────────────┴──────────────┤".center(columns))
-                print(f"│{"No Schedule":^71}│".center(columns))
-                print("└───────────────────────────────────────────────────────────────────────┘".center(columns))
+                print("├────────────────────┴───────────────────────┴──────────────┴──────────────┤".center(columns))
+                print(f"│{"No Schedule":^74}│".center(columns))
+                print("└──────────────────────────────────────────────────────────────────────────┘".center(columns))
 
         next_day = (days.index(current_day) + 1) % len(days)
         next_day = days[next_day]
@@ -808,6 +820,7 @@ def check_attendance():
                        (stud_no, next_day,))
         next_day_schedule = cursor.fetchall()  # Store all search schedule
 
+        total_next_schedule = 0
         # If it has next day schedule it will display all schedules.
         print("┌─────────────────────────────────────────────┐".center(columns))
         print(f"│{"NEXT SCHEDULE " + f"[{next_day.upper()}]":^45}│".center(columns))
@@ -818,9 +831,21 @@ def check_attendance():
                 print(f"│  Time         : {_schedule[3]:<28}│".center(columns))
                 if idx < len(next_day_schedule) - 1:
                     print(f"│{"-" * 40:^45}│".center(columns))
+                total_next_schedule += 1
         else:
             print(f"│{"No Schedule":^45}│".center(columns))
         print("└─────────────────────────────────────────────┘".center(columns))
+
+        if not checking_attendance:
+            if total_next_schedule == 6 and attendance_count >= 2:
+                set_console_size(90, 45 + 2 + (attendance_count-3))
+            elif attendance_count >= 5 and total_next_schedule >= 5:
+                set_console_size(90, 45 + (attendance_count - 4))
+            else:
+                set_console_size(90, 45)
+            center_console_window()
+            checking_attendance = True
+            check_attendance()
 
     # Display message
     if attendance_log:
@@ -844,6 +869,9 @@ def check_attendance():
         match user.upper():
             case "N":
                 clear(100)
+                set_console_size(90, 45)
+                center_console_window()
+                checking_attendance = False
                 check_attendance()
                 break
             case "Y":
@@ -1199,12 +1227,12 @@ def display_student_and_class_schedule(_class_schedule):
     max_schedule = max_schedule_day(_class_schedule)
     # Resize the console height based on largest maximum count of schedule
     if max_schedule == 6:
-        if registering_new_student or updating_student_details:
+        if in_register_new_student or in_update_student_details:
             set_console_size(120, 53)
         else:
             set_console_size(120, 49)
     elif max_schedule == 5:
-        if registering_new_student or updating_student_details:
+        if in_register_new_student or in_update_student_details:
             set_console_size(120, 49)
         else:
             set_console_size(120, 45)
@@ -1215,12 +1243,12 @@ def display_student_and_class_schedule(_class_schedule):
     columns = os.get_terminal_size().columns  # Save the size of console width
 
     # Checking again if not in update student details
-    if registering_new_student:
+    if in_register_new_student:
         tab_title("REGISTER NEW STUDENT")
-    elif updating_student_details:
-        tab_title("UPDATE STUDENT DETAILS")
-    else:
+    elif in_updating_class_schedule:
         tab_title("UPDATE SCHEDULE")
+    elif in_update_student_details:
+        tab_title("UPDATE STUDENT DETAILS")
 
     # Display student details
     _details(student_details)
