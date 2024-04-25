@@ -1260,6 +1260,7 @@ def display_student_and_class_schedule(_class_schedule):
 # Function for registration of new students
 def register_new_student():
     global registering_new_student
+    global in_register_new_student
     global updating_student_details
     global student_details
     global current_schedule
@@ -1425,6 +1426,7 @@ def register_new_student():
     print("\033[f", end="")
 
     # Clear variable and return to check attendance
+    in_register_new_student = False
     student_details.clear()
     new_schedule.clear()
     check_attendance()
