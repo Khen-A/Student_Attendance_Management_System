@@ -1732,6 +1732,9 @@ def update_schedule():
                 cursor.execute("DELETE FROM Class_Schedule WHERE Student_No = ?", (student_details[0],))
                 add_schedule(_update_schedule)
                 connection.commit()
+                temp_schedule.clear()
+                current_schedule.clear()
+                new_schedule.clear()
                 clear(100)
                 os.system(f"mode con cols={90} lines={45}")
                 columns = os.get_terminal_size().columns
