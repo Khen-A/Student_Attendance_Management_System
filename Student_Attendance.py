@@ -596,290 +596,6 @@ def _details(_student):
         print((f"└" + "–" * 86 + "┘").center(columns))
 
 
-# Function for checking attendance
-def check_attendance():
-    global checking_attendance
-    schedule = []
-    attendance_log = []
-    next_schedule = []
-    status = "PENDING"
-    today_next_schedule_found = False
-
-    tab_title("CHECK ATTENDANCE")
-
-    if not checking_attendance:
-        student("Check Attendance")
-
-        tab_title("CHECK ATTENDANCE")
-
-    stud_no = student_details[0]
-    stud_signature = student_details[5]
-
-    _details(student_details)
-
-    # Getting current date and time
-    current_date = datetime.now().date().strftime("%m/%d/%y")
-    current_day = datetime.now().date().strftime("%A")
-    current_time = datetime.now().time().strftime("%I:%M %p")
-
-    if current_time.startswith("0"):  # Removing the starting 0 in hour
-        current_time = current_time[1:]
-
-    # Searching for today class schedule in class schedule database
-    cursor.execute("SELECT * FROM Class_Schedule WHERE Student_No = ? AND _Day = ?",
-                   (stud_no, current_day,))
-    schedule.extend(cursor.fetchall())  # Store all search class schedule
-
-    # Checking for current schedule
-    for index, (stud_no, course_title, day, time) in enumerate(schedule):
-        start_time, end_time = time.split(" - ")
-
-        start_time = convert_to_24hrs(start_time)
-        end_time = convert_to_24hrs(end_time)
-        time_now = convert_to_24hrs(current_time)
-
-        # if the current time already skip the schedule time, the status will be marked as absent.
-        if end_time <= time_now:
-            # Searching for skip schedule
-            cursor.execute("SELECT * FROM Attendance WHERE Student_No = ? AND _Course = ? "
-                           "AND _Day = ? AND _Time = ? AND _Date = ?",
-                           (stud_no, course_title, day, time, current_date))
-            attn_log = cursor.fetchall()  # Store the search schedule
-            if not attn_log:
-                # Store the schedule to attendance log
-                attendance_log.append((stud_no, course_title, day, time, current_date, "N/A", "ABSENT"))
-                attendance(attendance_log)
-                connection.commit()
-                attendance_log.clear()
-
-        if start_time <= time_now <= end_time:  # Searching for current schedule
-            # Store the current schedule to attendance log
-            attendance_log.append([stud_no, course_title, day, time, current_date, current_time])
-
-            # Checking for next schedule
-            if index + 1 < len(schedule):
-                _next = schedule[index + 1]
-                next_schedule.append(_next)
-                today_next_schedule_found = True
-            break
-
-    # Checking now for attendance
-    time_interval = 0
-    _attendance = []
-    for attn, (stud_no, course_title, day, time, current_date, current_time) in enumerate(attendance_log):
-        # Searching for current attendance in attendance
-        cursor.execute("SELECT * FROM Attendance WHERE Student_No = ? AND _Course = ? "
-                       "AND _Day = ? AND _Time = ? AND _Date = ?",
-                       (stud_no, course_title, day, time, current_date))
-        _attendance = cursor.fetchall()  # Store all search schedule
-
-        # If it is not already signed, it will ask user to input their signature.
-        while not _attendance:
-            for attn_log in attendance_log:
-                # Display the current schedule course
-                print("┌─────────────────────────────────────────────┐".center(columns))
-                print(f"│{"SCHEDULE NOW":^45}│".center(columns))
-                print("├─────────────────────────────────────────────┤".center(columns))
-                print(f"│ Course Title : {attn_log[1]:<29}│".center(columns))
-                print(f"│ Time         : {attn_log[3]:<29}│".center(columns))
-                print(f"│ Status       : {status:<29}│".center(columns))
-                print("├─────────────────────────────────────────────┤".center(columns))
-                print("│                                             │".center(columns))
-                print("└─────────────────────────────────────────────┘".center(columns))
-                print("NOTE: If you're excused, just type EXCUSE.".center(columns))
-                print("\033[3F", end="")
-                key_signature = str(limit_input(f"{"":<21}│ Signature: ", 25))
-
-                # Checking if the signature is correct
-                if key_signature.upper() == "EXCUSE":  # Allow the user to excuse attendance.
-                    status = "PENDING EXCUSE"
-                    pass
-                elif key_signature != stud_signature:
-                    clear(100)
-                    print("\033[23E", end="")
-                    print("MSG: You entered the wrong signature!".center(columns))
-                    print("\033[f", end="")
-                    check_attendance()
-
-                # Preparing for queuing the attendance
-                attendance_log.clear()
-
-                # Calculate the time interval for checking attendance
-                start_time = convert_to_24hrs(attn_log[3].split(" - ")[0])
-                current_time = datetime.now().time().strftime("%I:%M %p")
-                time_now = convert_to_24hrs(current_time)
-                time_interval = int((time_now - start_time) / 60)
-
-                # Condition for Present, Absent, and Late
-                if status == "PENDING":
-                    if 5 <= time_interval <= 15:
-                        status = "LATE"
-                    elif time_interval > 15:
-                        status = "ABSENT"
-                    else:
-                        status = "PRESENT"
-
-                if current_time.startswith("0"):  # Removing the starting 0 in hour
-                    current_time = current_time[1:]
-
-                # Storing for now in attendance_log variable as array
-                attendance_log = [(attn_log[0], attn_log[1], attn_log[2], attn_log[3],
-                                   attn_log[4], current_time, status)]
-
-                # Committing or saving the attendance to database
-                attendance(attendance_log)
-                connection.commit()
-
-                # Storing attendance log to _attendance variable for using it to display
-                _attendance = attendance_log
-
-                # Clearing and updating console display
-                print("\033[2E", end="")
-                clear(9)
-                print("\033[f", end="")
-                tab_title("CHECK ATTENDANCE")
-                print("\033[8E", end="")
-
-    # Searching again for next
-    if not today_next_schedule_found:
-        for index, (stud_no, course_title, day, time) in enumerate(schedule):
-            next_start_time, next_end_time = time.split(" - ")
-
-            next_start_time = convert_to_24hrs(next_start_time)
-            time_now = convert_to_24hrs(current_time)
-
-            if next_start_time >= time_now:
-                schedule[index] = (stud_no, course_title, day, time)
-                next_schedule.append(schedule[index])
-                today_next_schedule_found = True
-                break
-
-    # Displaying attendance and next schedule if next schedule found
-    if today_next_schedule_found:
-        print("┌─────────────────────────────────────────────┐".center(columns))
-        print(f"│{"SCHEDULE NOW":^45}│".center(columns))
-        print("├─────────────────────────────────────────────┤".center(columns))
-        if _attendance:
-            for log in _attendance:
-                print(f"│ Course Title : {log[1]:<29}│".center(columns))
-                print(f"│ Time         : {log[3]:<29}│".center(columns))
-                print(f"│ Status       : {log[6]:<29}│".center(columns))
-                print(f"│ Time In      : {log[5]:<29}│".center(columns))
-        else:
-            print(f"│{"NO SCHEDULE":^45}│".center(columns))
-        print("└─────────────────────────────────────────────┘\n".center(columns))
-
-        print("┌─────────────────────────────────────────────┐".center(columns))
-        print(f"│{"NEXT SCHEDULE":^45}│".center(columns))
-        print("├─────────────────────────────────────────────┤".center(columns))
-        for x in next_schedule:
-            print(f"│ Course Title : {x[1]:<29}│".center(columns))
-            print(f"│ Time         : {x[3]:<29}│".center(columns))
-            print("└─────────────────────────────────────────────┘".center(columns))
-    else:  # Else if there's no next schedule found. It will display all schedules on that day.
-        attendance_count = 0
-        if not attendance_log:  # Checking for attendance_log if it is not null array
-            # Table title
-            print("┌──────────────────────────────────────────────────────────────────────────┐".center(columns))
-            print(f"│{"SCHEDULE TODAY":^74}│".center(columns))
-            print("├────────────────────┬───────────────────────┬──────────────┬──────────────┤".center(columns))
-
-            # Column title
-            print(f"│{"COURSE TITLE":^20}│{"TIME":^23}│{"STATUS":^14}│{"TIME IN":^14}│".center(columns))
-            if schedule:
-                print("├────────────────────┼───────────────────────┼──────────────┼──────────────┤"
-                      .center(columns))
-                for attn, (stud_no, course_title, day, time) in enumerate(schedule):
-                    # Searching for all attendance in attendance database
-                    cursor.execute("SELECT * FROM Attendance WHERE Student_No = ? AND _Course = ? "
-                                   "AND _Day = ? AND _Time = ? AND _Date = ?",
-                                   (stud_no, course_title, day, time, current_date))
-                    _attendance = cursor.fetchall()  # Store all search schedule
-                    if _attendance:
-                        for log in _attendance:
-                            if len(log[1]) > 18:
-                                course_title = log[1][:16] + ".."
-                            else:
-                                course_title = log[1]
-                            print(f"│{" " + course_title:<20}│{" " + log[3]:^23}"
-                                  f"│{log[6]:^14}│{log[5]:^14}│".center(columns))
-
-                    attendance_count += 1
-                print("└────────────────────┴───────────────────────┴──────────────┴──────────────┘"
-                      .center(columns))
-            else:
-                print("├────────────────────┴───────────────────────┴──────────────┴──────────────┤".center(columns))
-                print(f"│{"No Schedule":^74}│".center(columns))
-                print("└──────────────────────────────────────────────────────────────────────────┘".center(columns))
-
-        next_day = (days.index(current_day) + 1) % len(days)
-        next_day = days[next_day]
-
-        # Searching for next day schedule in class schedule database
-        cursor.execute("SELECT * FROM Class_Schedule WHERE Student_No = ? AND _Day = ?",
-                       (stud_no, next_day,))
-        next_day_schedule = cursor.fetchall()  # Store all search schedule
-
-        total_next_schedule = 0
-        # If it has next day schedule it will display all schedules.
-        print("┌─────────────────────────────────────────────┐".center(columns))
-        print(f"│{"NEXT SCHEDULE " + f"[{next_day.upper()}]":^45}│".center(columns))
-        print("├─────────────────────────────────────────────┤".center(columns))
-        if next_day_schedule:
-            for idx, _schedule in enumerate(next_day_schedule):
-                print(f"│  Course Title : {_schedule[1]:<28}│".center(columns))
-                print(f"│  Time         : {_schedule[3]:<28}│".center(columns))
-                if idx < len(next_day_schedule) - 1:
-                    print(f"│{"-" * 40:^45}│".center(columns))
-                total_next_schedule += 1
-        else:
-            print(f"│{"No Schedule":^45}│".center(columns))
-        print("└─────────────────────────────────────────────┘".center(columns))
-
-        if not checking_attendance:
-            if total_next_schedule == 6 and attendance_count >= 2:
-                set_console_size(90, 45 + 2 + (attendance_count-3))
-            elif attendance_count >= 5 and total_next_schedule >= 5:
-                set_console_size(90, 45 + (attendance_count - 4))
-            else:
-                set_console_size(90, 45)
-            center_console_window()
-            checking_attendance = True
-            check_attendance()
-
-    # Display message
-    if attendance_log:
-        if status == "ABSENT":
-            print(f"MSG: You've been marked as absent for being {time_interval} minutes late.".center(columns))
-        elif status == "LATE":
-            print(f"MSG: You've been marked as late for being {time_interval} minutes late.".center(columns))
-        elif status == "PENDING EXCUSE":
-            print("\n", end="")
-            print(f"{"NOTE:":<80}".center(columns))
-            print("     Your  request  is  now  being  processed,  and  it  will  notify  your".center(columns))
-            print("instructor.  Please provide  a valid excuse  letter to  your instructor  so".center(columns))
-            print("they   can  consider  your  request.  Ensure  that  your  letter   includes".center(columns))
-            print("a  clear  explanation   for  the  need  for  an  excuse  and  provides  any".center(columns))
-            print("necessary  supporting  documentation.  Thank you...                        ".center(columns))
-
-    print("\n")
-    print(("-" * 80).center(columns))
-    while True:
-        user = input_key("      Press [N] to check again or [Y] to exit: ")
-        match user.upper():
-            case "N":
-                clear(100)
-                set_console_size(90, 45)
-                center_console_window()
-                checking_attendance = False
-                check_attendance()
-                break
-            case "Y":
-                exit()
-            case _:
-                print("\033[1F", end="")
-
-
 # Function for displaying all class schedule
 def class_schedule(__schedule):
     # Group schedules by day
@@ -1255,6 +971,290 @@ def display_student_and_class_schedule(_class_schedule):
 
     # Display the new class schedule
     class_schedule(_class_schedule)
+
+
+# Function for checking attendance
+def check_attendance():
+    global checking_attendance
+    schedule = []
+    attendance_log = []
+    next_schedule = []
+    status = "PENDING"
+    today_next_schedule_found = False
+
+    tab_title("CHECK ATTENDANCE")
+
+    if not checking_attendance:
+        student("Check Attendance")
+
+        tab_title("CHECK ATTENDANCE")
+
+    stud_no = student_details[0]
+    stud_signature = student_details[5]
+
+    _details(student_details)
+
+    # Getting current date and time
+    current_date = datetime.now().date().strftime("%m/%d/%y")
+    current_day = datetime.now().date().strftime("%A")
+    current_time = datetime.now().time().strftime("%I:%M %p")
+
+    if current_time.startswith("0"):  # Removing the starting 0 in hour
+        current_time = current_time[1:]
+
+    # Searching for today class schedule in class schedule database
+    cursor.execute("SELECT * FROM Class_Schedule WHERE Student_No = ? AND _Day = ?",
+                   (stud_no, current_day,))
+    schedule.extend(cursor.fetchall())  # Store all search class schedule
+
+    # Checking for current schedule
+    for index, (stud_no, course_title, day, time) in enumerate(schedule):
+        start_time, end_time = time.split(" - ")
+
+        start_time = convert_to_24hrs(start_time)
+        end_time = convert_to_24hrs(end_time)
+        time_now = convert_to_24hrs(current_time)
+
+        # if the current time already skip the schedule time, the status will be marked as absent.
+        if end_time <= time_now:
+            # Searching for skip schedule
+            cursor.execute("SELECT * FROM Attendance WHERE Student_No = ? AND _Course = ? "
+                           "AND _Day = ? AND _Time = ? AND _Date = ?",
+                           (stud_no, course_title, day, time, current_date))
+            attn_log = cursor.fetchall()  # Store the search schedule
+            if not attn_log:
+                # Store the schedule to attendance log
+                attendance_log.append((stud_no, course_title, day, time, current_date, "N/A", "ABSENT"))
+                attendance(attendance_log)
+                connection.commit()
+                attendance_log.clear()
+
+        if start_time <= time_now <= end_time:  # Searching for current schedule
+            # Store the current schedule to attendance log
+            attendance_log.append([stud_no, course_title, day, time, current_date, current_time])
+
+            # Checking for next schedule
+            if index + 1 < len(schedule):
+                _next = schedule[index + 1]
+                next_schedule.append(_next)
+                today_next_schedule_found = True
+            break
+
+    # Checking now for attendance
+    time_interval = 0
+    _attendance = []
+    for attn, (stud_no, course_title, day, time, current_date, current_time) in enumerate(attendance_log):
+        # Searching for current attendance in attendance
+        cursor.execute("SELECT * FROM Attendance WHERE Student_No = ? AND _Course = ? "
+                       "AND _Day = ? AND _Time = ? AND _Date = ?",
+                       (stud_no, course_title, day, time, current_date))
+        _attendance = cursor.fetchall()  # Store all search schedule
+
+        # If it is not already signed, it will ask user to input their signature.
+        while not _attendance:
+            for attn_log in attendance_log:
+                # Display the current schedule course
+                print("┌─────────────────────────────────────────────┐".center(columns))
+                print(f"│{"SCHEDULE NOW":^45}│".center(columns))
+                print("├─────────────────────────────────────────────┤".center(columns))
+                print(f"│ Course Title : {attn_log[1]:<29}│".center(columns))
+                print(f"│ Time         : {attn_log[3]:<29}│".center(columns))
+                print(f"│ Status       : {status:<29}│".center(columns))
+                print("├─────────────────────────────────────────────┤".center(columns))
+                print("│                                             │".center(columns))
+                print("└─────────────────────────────────────────────┘".center(columns))
+                print("NOTE: If you're excused, just type EXCUSE.".center(columns))
+                print("\033[3F", end="")
+                key_signature = str(limit_input(f"{"":<21}│ Signature: ", 25))
+
+                # Checking if the signature is correct
+                if key_signature.upper() == "EXCUSE":  # Allow the user to excuse attendance.
+                    status = "PENDING EXCUSE"
+                    pass
+                elif key_signature != stud_signature:
+                    clear(100)
+                    print("\033[23E", end="")
+                    print("MSG: You entered the wrong signature!".center(columns))
+                    print("\033[f", end="")
+                    check_attendance()
+
+                # Preparing for queuing the attendance
+                attendance_log.clear()
+
+                # Calculate the time interval for checking attendance
+                start_time = convert_to_24hrs(attn_log[3].split(" - ")[0])
+                current_time = datetime.now().time().strftime("%I:%M %p")
+                time_now = convert_to_24hrs(current_time)
+                time_interval = int((time_now - start_time) / 60)
+
+                # Condition for Present, Absent, and Late
+                if status == "PENDING":
+                    if 5 <= time_interval <= 15:
+                        status = "LATE"
+                    elif time_interval > 15:
+                        status = "ABSENT"
+                    else:
+                        status = "PRESENT"
+
+                if current_time.startswith("0"):  # Removing the starting 0 in hour
+                    current_time = current_time[1:]
+
+                # Storing for now in attendance_log variable as array
+                attendance_log = [(attn_log[0], attn_log[1], attn_log[2], attn_log[3],
+                                   attn_log[4], current_time, status)]
+
+                # Committing or saving the attendance to database
+                attendance(attendance_log)
+                connection.commit()
+
+                # Storing attendance log to _attendance variable for using it to display
+                _attendance = attendance_log
+
+                # Clearing and updating console display
+                print("\033[2E", end="")
+                clear(9)
+                print("\033[f", end="")
+                tab_title("CHECK ATTENDANCE")
+                print("\033[8E", end="")
+
+    # Searching again for next
+    if not today_next_schedule_found:
+        for index, (stud_no, course_title, day, time) in enumerate(schedule):
+            next_start_time, next_end_time = time.split(" - ")
+
+            next_start_time = convert_to_24hrs(next_start_time)
+            time_now = convert_to_24hrs(current_time)
+
+            if next_start_time >= time_now:
+                schedule[index] = (stud_no, course_title, day, time)
+                next_schedule.append(schedule[index])
+                today_next_schedule_found = True
+                break
+
+    # Displaying attendance and next schedule if next schedule found
+    if today_next_schedule_found:
+        print("┌─────────────────────────────────────────────┐".center(columns))
+        print(f"│{"SCHEDULE NOW":^45}│".center(columns))
+        print("├─────────────────────────────────────────────┤".center(columns))
+        if _attendance:
+            for log in _attendance:
+                print(f"│ Course Title : {log[1]:<29}│".center(columns))
+                print(f"│ Time         : {log[3]:<29}│".center(columns))
+                print(f"│ Status       : {log[6]:<29}│".center(columns))
+                print(f"│ Time In      : {log[5]:<29}│".center(columns))
+        else:
+            print(f"│{"NO SCHEDULE":^45}│".center(columns))
+        print("└─────────────────────────────────────────────┘\n".center(columns))
+
+        print("┌─────────────────────────────────────────────┐".center(columns))
+        print(f"│{"NEXT SCHEDULE":^45}│".center(columns))
+        print("├─────────────────────────────────────────────┤".center(columns))
+        for x in next_schedule:
+            print(f"│ Course Title : {x[1]:<29}│".center(columns))
+            print(f"│ Time         : {x[3]:<29}│".center(columns))
+            print("└─────────────────────────────────────────────┘".center(columns))
+    else:  # Else if there's no next schedule found. It will display all schedules on that day.
+        attendance_count = 0
+        if not attendance_log:  # Checking for attendance_log if it is not null array
+            # Table title
+            print("┌──────────────────────────────────────────────────────────────────────────┐".center(columns))
+            print(f"│{"SCHEDULE TODAY":^74}│".center(columns))
+            print("├────────────────────┬───────────────────────┬──────────────┬──────────────┤".center(columns))
+
+            # Column title
+            print(f"│{"COURSE TITLE":^20}│{"TIME":^23}│{"STATUS":^14}│{"TIME IN":^14}│".center(columns))
+            if schedule:
+                print("├────────────────────┼───────────────────────┼──────────────┼──────────────┤"
+                      .center(columns))
+                for attn, (stud_no, course_title, day, time) in enumerate(schedule):
+                    # Searching for all attendance in attendance database
+                    cursor.execute("SELECT * FROM Attendance WHERE Student_No = ? AND _Course = ? "
+                                   "AND _Day = ? AND _Time = ? AND _Date = ?",
+                                   (stud_no, course_title, day, time, current_date))
+                    _attendance = cursor.fetchall()  # Store all search schedule
+                    if _attendance:
+                        for log in _attendance:
+                            if len(log[1]) > 18:
+                                course_title = log[1][:16] + ".."
+                            else:
+                                course_title = log[1]
+                            print(f"│{" " + course_title:<20}│{" " + log[3]:^23}"
+                                  f"│{log[6]:^14}│{log[5]:^14}│".center(columns))
+
+                    attendance_count += 1
+                print("└────────────────────┴───────────────────────┴──────────────┴──────────────┘"
+                      .center(columns))
+            else:
+                print("├────────────────────┴───────────────────────┴──────────────┴──────────────┤".center(columns))
+                print(f"│{"No Schedule":^74}│".center(columns))
+                print("└──────────────────────────────────────────────────────────────────────────┘".center(columns))
+
+        next_day = (days.index(current_day) + 1) % len(days)
+        next_day = days[next_day]
+
+        # Searching for next day schedule in class schedule database
+        cursor.execute("SELECT * FROM Class_Schedule WHERE Student_No = ? AND _Day = ?",
+                       (stud_no, next_day,))
+        next_day_schedule = cursor.fetchall()  # Store all search schedule
+
+        total_next_schedule = 0
+        # If it has next day schedule it will display all schedules.
+        print("┌─────────────────────────────────────────────┐".center(columns))
+        print(f"│{"NEXT SCHEDULE " + f"[{next_day.upper()}]":^45}│".center(columns))
+        print("├─────────────────────────────────────────────┤".center(columns))
+        if next_day_schedule:
+            for idx, _schedule in enumerate(next_day_schedule):
+                print(f"│  Course Title : {_schedule[1]:<28}│".center(columns))
+                print(f"│  Time         : {_schedule[3]:<28}│".center(columns))
+                if idx < len(next_day_schedule) - 1:
+                    print(f"│{"-" * 40:^45}│".center(columns))
+                total_next_schedule += 1
+        else:
+            print(f"│{"No Schedule":^45}│".center(columns))
+        print("└─────────────────────────────────────────────┘".center(columns))
+
+        if not checking_attendance:
+            if total_next_schedule == 6 and attendance_count >= 2:
+                set_console_size(90, 45 + 2 + (attendance_count-3))
+            elif attendance_count >= 5 and total_next_schedule >= 5:
+                set_console_size(90, 45 + (attendance_count - 4))
+            else:
+                set_console_size(90, 45)
+            center_console_window()
+            checking_attendance = True
+            check_attendance()
+
+    # Display message
+    if attendance_log:
+        if status == "ABSENT":
+            print(f"MSG: You've been marked as absent for being {time_interval} minutes late.".center(columns))
+        elif status == "LATE":
+            print(f"MSG: You've been marked as late for being {time_interval} minutes late.".center(columns))
+        elif status == "PENDING EXCUSE":
+            print("\n", end="")
+            print(f"{"NOTE:":<80}".center(columns))
+            print("     Your  request  is  now  being  processed,  and  it  will  notify  your".center(columns))
+            print("instructor.  Please provide  a valid excuse  letter to  your instructor  so".center(columns))
+            print("they   can  consider  your  request.  Ensure  that  your  letter   includes".center(columns))
+            print("a  clear  explanation   for  the  need  for  an  excuse  and  provides  any".center(columns))
+            print("necessary  supporting  documentation.  Thank you...                        ".center(columns))
+
+    print("\n")
+    print(("-" * 80).center(columns))
+    while True:
+        user = input_key("      Press [N] to check again or [Y] to exit: ")
+        match user.upper():
+            case "N":
+                clear(100)
+                set_console_size(90, 45)
+                center_console_window()
+                checking_attendance = False
+                check_attendance()
+                break
+            case "Y":
+                exit()
+            case _:
+                print("\033[1F", end="")
 
 
 # Function for registration of new students
