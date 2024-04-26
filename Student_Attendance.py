@@ -1019,55 +1019,127 @@ def add_course(stud_no, schedule_day):
 
     _total_course = total_course()
     _course_entry = []
-    print("\033[5F")
-    print(f"{"":<24}│ ► {schedule_day} [{_total_course}]")
 
-    count = 0
-    _course_entry.extend(course_entry(stud_no, _total_course, schedule_day, count, None))
+    if _total_course > 0:  # Check if total_course is not zero
+        print("\033[5F")
+        print(f"{"":<24}│ ► {schedule_day} [{_total_course}]")
+
+        count = 0
+        _course_entry.extend(course_entry(stud_no, _total_course, schedule_day, count, None))
+    else:
+        clear(5)
+
     return _course_entry
 
 
 # Function for inputting course title and time
 def course_entry(stud_no, _total_course, _schedule_day, _count, _update_schedule):
     new_schedule = []
-    if _total_course > 0:  # Check if total_course is not zero
-        while _count < _total_course:  # If num is less than the set total_course the loop will continue to execute
-            # Adding course and time design
-            print(f"│{"-" * 36:^40}│".center(columns))
-            print(f"│{"   Course Title :":<40}│".center(columns))
-            print(f"│{"   Time         :":<40}│".center(columns))
-            print(("│" + " " * 40 + "│").center(columns))
-            print(("╰" + "─" * 40 + "╯").center(columns))
+    while _count < _total_course:  # If num is less than the set total_course the loop will continue to execute
+        # Adding course and time design
+        print(f"│{"-" * 36:^40}│".center(columns))
+        print(f"│{"   Course Title :":<40}│".center(columns))
+        print(f"│{"   Time         :":<40}│".center(columns))
+        print(("│" + " " * 40 + "│").center(columns))
+        print(("╰" + "─" * 40 + "╯").center(columns))
 
-            print("\033[4F", end="")
-            schedule_course = str(limit_input(f"{"":<24}│   Course Title : ", 19))
-            print("\033[1E", end="")
-
-            schedule_time = time_entry()
-
-            # Checking for conflict schedule
-            if _update_schedule:  # If schedule to modify is not empty
-                conflict = check_conflict(_update_schedule, _schedule_day, schedule_time)
-            else:
-                conflict = check_conflict(new_schedule, _schedule_day, schedule_time)
-
-            if conflict is None:
-                new_schedule.append((stud_no, schedule_course, _schedule_day, schedule_time))
-                _count += 1
-                print("\033[1E", end="")
-            else:
-                print("\033[3E", end="")
-                msg = input_key((f"MSG: Conflict schedule with {conflict.upper()}.  ".center(columns)) +
-                                "\033[D" * (45 - int((31 + len(conflict)) / 2)))
-                if msg:
-                    clear(6)
-
-        print("\033[2E", end="")
-    else:
+        print("\033[4F", end="")
+        schedule_course = str(limit_input(f"{"":<24}│   Course Title : ", 19))
         print("\033[1E", end="")
 
+        schedule_time = time_entry()
+
+        # Checking for conflict schedule
+        if _update_schedule:  # If schedule to modify is not empty
+            conflict = check_conflict(_update_schedule, _schedule_day, schedule_time)
+        else:
+            conflict = check_conflict(new_schedule, _schedule_day, schedule_time)
+
+        if conflict is None:
+            new_schedule.append((stud_no, schedule_course, _schedule_day, schedule_time))
+            _count += 1
+            print("\033[1E", end="")
+        else:
+            print("\033[3E", end="")
+            msg = input_key((f"MSG: Conflict schedule with {conflict.upper()}.  ".center(columns)) +
+                            "\033[D" * (45 - int((31 + len(conflict)) / 2)))
+            if msg:
+                clear(6)
+
+    print("\033[2E", end="")
     clear((3 * _count) + 4)
+
     return new_schedule
+
+
+# Function for updating course
+def update_course(_stud_no, _schedule_day, _current_total_course, _day_to_update, _schedule):
+    global current_str
+    _update_schedule = []
+    count = 0
+
+    print(("├" + "─" * 40 + "┤").center(columns))
+    print(('│' + " " * 40 + "│").center(columns))
+    print(('│' + " " * 40 + "│").center(columns))
+    print(("│" + " " * 40 + "│").center(columns))
+    print(("│" + " " * 40 + '│').center(columns))
+    print(('│' + ' ' * 40 + "│").center(columns))
+    print(("│" + " " * 40 + "│").center(columns))
+    print(("╰" + "─" * 40 + "╯").center(columns))
+    print("\033[7F", end="")
+    print(f"{"":<24}│ ► {_schedule_day} {[_current_total_course]}")
+    print("\033[2E", end="")
+
+    # Request for the total course in a day
+    _total_course = total_course()
+
+    if _total_course > 0:  # Check if total_course is not zero
+        # Display the total course
+        print("\033[5E", end="")
+        clear(9)
+        print(f"│{f"{" ► " + _schedule_day} {[_total_course]}":<40}│".center(columns))
+
+        # Getting each schedule in day_to_update
+        for new_schedule in _day_to_update[:_total_course]:
+            while True:
+                # Design for course and time and display the current course
+                print(f"│{"-" * 36:^40}│".center(columns))
+                print(f"│{f"   Course Title : {new_schedule[1]}":<40}│".center(columns))
+                print(f"│{f"   Time         : {new_schedule[3]}":<40}│".center(columns))
+                print(("│" + " " * 40 + "│").center(columns))
+                print(("╰" + "─" * 40 + "╯").center(columns))
+
+                print("\033[4F", end="")
+                current_str = new_schedule[1]
+                schedule_course = str(limit_input(f"{"":<24}│   Course Title : ", 19))
+                print("\033[1E", end="")
+                current_str = new_schedule[3]
+                schedule_time = time_entry()
+                current_str = ""
+
+                # Checking for conflict schedule
+                conflict = check_conflict(_update_schedule, _schedule_day, schedule_time)
+                if conflict:
+                    print("\033[3E", end="")
+                    msg = input_key((f"MSG: Conflict schedule with {conflict.upper()}.  ".center(columns)) +
+                                    "\033[D" * (45 - int((31 + len(conflict)) / 2)))
+                    if msg:
+                        clear(6)
+                        continue
+
+                _update_schedule.append((_stud_no, schedule_course, _schedule_day, schedule_time))
+
+                count += 1
+                print("\033[1E", end="")
+                break
+
+        if count != _total_course:
+            _update_schedule.extend(course_entry(_stud_no, _total_course, _schedule_day,
+                                                 count, _update_schedule))
+    else:
+        clear(5)
+
+    return _update_schedule
 
 
 # Function for inputting and validating time
@@ -1122,73 +1194,6 @@ def display_student_and_class_schedule(_class_schedule):
 
     # Display the new class schedule
     class_schedule(_class_schedule)
-
-
-# Function for updating course
-def update_course(_stud_no, _schedule_day, _current_total_course, _day_to_update, _schedule):
-    global current_str
-    _update_schedule = []
-    count = 0
-
-    print(("├" + "─" * 40 + "┤").center(columns))
-    print(('│' + " " * 40 + "│").center(columns))
-    print(('│' + " " * 40 + "│").center(columns))
-    print(("│" + " " * 40 + "│").center(columns))
-    print(("│" + " " * 40 + '│').center(columns))
-    print(('│' + ' ' * 40 + "│").center(columns))
-    print(("│" + " " * 40 + "│").center(columns))
-    print(("╰" + "─" * 40 + "╯").center(columns))
-    print("\033[7F", end="")
-    print(f"{"":<24}│ ► {_schedule_day} {[_current_total_course]}")
-    print("\033[2E", end="")
-
-    # Request for the total course in a day
-    _total_course = total_course()
-
-    # Display the total course
-    print("\033[5E", end="")
-    clear(9)
-    print(f"│{f"{" ► " + _schedule_day} {[_total_course]}":<40}│".center(columns))
-
-    # Getting each schedule in day_to_update
-    for new_schedule in _day_to_update[:_total_course]:
-        while True:
-            # Design for course and time and display the current course
-            print(f"│{"-" * 36:^40}│".center(columns))
-            print(f"│{f"   Course Title : {new_schedule[1]}":<40}│".center(columns))
-            print(f"│{f"   Time         : {new_schedule[3]}":<40}│".center(columns))
-            print(("│" + " " * 40 + "│").center(columns))
-            print(("╰" + "─" * 40 + "╯").center(columns))
-
-            print("\033[4F", end="")
-            current_str = new_schedule[1]
-            schedule_course = str(limit_input(f"{"":<24}│   Course Title : ", 19))
-            print("\033[1E", end="")
-            current_str = new_schedule[3]
-            schedule_time = time_entry()
-            current_str = ""
-
-            # Checking for conflict schedule
-            conflict = check_conflict(_update_schedule, _schedule_day, schedule_time)
-            if conflict:
-                print("\033[3E", end="")
-                msg = input_key((f"MSG: Conflict schedule with {conflict.upper()}.  ".center(columns)) +
-                                "\033[D" * (45 - int((31 + len(conflict)) / 2)))
-                if msg:
-                    clear(6)
-                    continue
-
-            _update_schedule.append((_stud_no, schedule_course, _schedule_day, schedule_time))
-
-            count += 1
-            print("\033[1E", end="")
-            break
-
-    if count != _total_course:
-        _update_schedule.extend(course_entry(_stud_no, _total_course, _schedule_day,
-                                             count, _update_schedule))
-
-    return _update_schedule
 
 
 # Function for registration of new students
