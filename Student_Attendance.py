@@ -14,9 +14,8 @@ import sys
 # Initialize variable
 student_details = []
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+current_schedule = []
 days_of_week = ""
-schedule = []
-new_schedule = []
 current_str = ""
 data = ""
 columns = int
@@ -126,27 +125,43 @@ def run_as_administrator():
         sys.exit()
 
 
-# Function for aligning console to center windows
+# Function for aligning console to center windows and disable resizing of console
 def center_console_window():
+    # Define necessary constants
+    gwl_style = -16
+    ws_size_box = 0x00040000
+    ws_maximize_box = 0x00010000
+
     # Get handle to the console window
-    console_handle = ctypes.windll.kernel32.GetConsoleWindow()
-    if console_handle != 0:
-        # Get screen dimensions
-        screen_width = ctypes.windll.user32.GetSystemMetrics(0)
-        screen_height = ctypes.windll.user32.GetSystemMetrics(1)
+    hwnd = ctypes.windll.kernel32.GetConsoleWindow()
 
-        # Get dimensions of the console window
-        rect = ctypes.wintypes.RECT()
-        ctypes.windll.user32.GetWindowRect(console_handle, ctypes.byref(rect))
-        console_width = rect.right - rect.left
-        console_height = rect.bottom - rect.top
+    # Get current style
+    style = ctypes.windll.user32.GetWindowLongW(hwnd, gwl_style)
 
-        # Calculate new position
-        x = (screen_width - console_width) // 2
-        y = (screen_height - console_height) // 2
+    # Restore console style
+    original_style = style | ws_size_box | ws_maximize_box
+    ctypes.windll.user32.SetWindowLongW(hwnd, gwl_style, original_style)
 
-        # Set console window position
-        ctypes.windll.user32.MoveWindow(console_handle, x, y, console_width, console_height, True)
+    # Get screen dimensions
+    screen_width = ctypes.windll.user32.GetSystemMetrics(0)
+    screen_height = ctypes.windll.user32.GetSystemMetrics(1)
+
+    # Get dimensions of the console window
+    rect = ctypes.wintypes.RECT()
+    ctypes.windll.user32.GetWindowRect(hwnd, ctypes.byref(rect))
+    console_width = rect.right - rect.left
+    console_height = rect.bottom - rect.top
+
+    # Calculate new position
+    x = (screen_width - console_width) // 2
+    y = (screen_height - console_height) // 2
+
+    # Set console window position
+    ctypes.windll.user32.MoveWindow(hwnd, x, y, console_width, console_height, True)
+
+    # Update console style to disable resizing of console
+    new_style = style & ~ws_size_box & ~ws_maximize_box
+    ctypes.windll.user32.SetWindowLongW(hwnd, gwl_style, new_style)
 
 
 # Function for assigning console title
@@ -181,21 +196,6 @@ def is_single_instance(_title):
 # Function for resizing console
 def set_console_size(width: int, height: int):
     os.system(f"mode con cols={width} lines={height}")
-
-
-# Function for not allowing user to resize and maximizing the console
-def set_window_style():
-    # Define necessary constants
-    gwl_style = -16
-    ws_sizebox = 0x00040000
-    ws_maximizebox = 0x00010000
-
-    # Get handle to the console window
-    hwnd = ctypes.windll.kernel32.GetConsoleWindow()
-
-    # update the window style to remove the sizing border
-    style = ctypes.windll.user32.GetWindowLongW(hwnd, gwl_style) & ~ws_sizebox & ~ws_maximizebox
-    ctypes.windll.user32.SetWindowLongW(hwnd, gwl_style, style)
 
 
 # Function for clearing/deleting a line
@@ -419,7 +419,11 @@ def student(__usage):
     _student = cursor.fetchall()  # Saving temporarily the search student details
     if _student:  # Checking if student exist
         student_details = [x for item in _student for x in item[0:6]]  # Saving student details as array
-        if not __usage == "Update Schedule" and not __usage == "Update Student Details":
+        if __usage == "Update Schedule":
+            pass
+        elif __usage == "Update Student Details":
+            pass
+        else:
             print("\033[10E", end="")
             clear(100)
             return
@@ -512,7 +516,6 @@ def student(__usage):
         key_signature = str(limit_input(f"{"":<21}│    Signature   : ", 25))
         if key_signature == student_details[5]:  # If signature is correct
             cursor.execute("DELETE FROM Login_Attempt WHERE Student_No = ?", (student_details[0],))
-            add_schedule(schedule)
             connection.commit()
             print("\033[10E", end="")
             clear(100)
@@ -550,7 +553,7 @@ def student(__usage):
 def _details(_student):
     # Checking if user not updating student details and not register new student
     if updating_student_details or in_update_student_details or registering_new_student or in_register_new_student:
-        print(("╭" + "─" * 84 + "╮").center(columns))
+        print(('╭' + '─' * 84 + '╮').center(columns))
         print(f"│{"STUDENT DETAILS:":^84}│".center(columns))
         print(("├" + "─" * 84 + "┤").center(columns))
         print(("│" + " " * 84 + "│").center(columns))
@@ -575,11 +578,11 @@ def _details(_student):
 
 # Function for checking attendance
 def check_attendance():
+    schedule = []
     attendance_log = []
     next_schedule = []
     status = "PENDING"
     today_next_schedule_found = False
-    schedule.clear()
 
     tab_title("CHECK ATTENDANCE")
 
@@ -784,17 +787,17 @@ def check_attendance():
         # Searching for next day schedule in class schedule database
         cursor.execute("SELECT * FROM Class_Schedule WHERE Student_No = ? AND _Day = ?",
                        (stud_no, next_day,))
-        next_day_sched = cursor.fetchall()  # Store all search schedule
+        next_day_schedule = cursor.fetchall()  # Store all search schedule
 
         # If it has next day schedule it will display all schedules.
         print("┌─────────────────────────────────────────────┐".center(columns))
         print(f"│{"NEXT SCHEDULE " + f"[{next_day.upper()}]":^45}│".center(columns))
         print("├─────────────────────────────────────────────┤".center(columns))
-        if next_day_sched:
-            for idx, sched in enumerate(next_day_sched):
-                print(f"│  Course Title : {sched[1]:<28}│".center(columns))
-                print(f"│  Time         : {sched[3]:<28}│".center(columns))
-                if idx < len(next_day_sched) - 1:
+        if next_day_schedule:
+            for idx, _schedule in enumerate(next_day_schedule):
+                print(f"│  Course Title : {_schedule[1]:<28}│".center(columns))
+                print(f"│  Time         : {_schedule[3]:<28}│".center(columns))
+                if idx < len(next_day_schedule) - 1:
                     print(f"│{"-" * 40:^45}│".center(columns))
         else:
             print(f"│{"No Schedule":^45}│".center(columns))
@@ -939,17 +942,17 @@ def convert_to_24hrs(time_str):
 def check_conflict(schedules, day, time):
     new_start, new_end = map(convert_to_24hrs, time.split(' - '))
 
-    for index, (stud_no, sched_course, sched_day, sched_time) in enumerate(schedules):
-        if sched_day != day:
+    for index, (stud_no, _course, _day, _time) in enumerate(schedules):
+        if _day != day:
             continue
 
-        start, end = map(convert_to_24hrs, sched_time.split(' - '))
+        start, end = map(convert_to_24hrs, _time.split(' - '))
         if start <= new_start < end:
-            return sched_course  # Conflict found
+            return _course  # Conflict found
         elif start < new_end <= end:
-            return sched_course  # Conflict found
+            return _course  # Conflict found
         elif new_start <= start and new_end >= end:
-            return sched_course  # Conflict found
+            return _course  # Conflict found
 
     return None  # No conflict found
 
@@ -981,234 +984,211 @@ def max_schedule_day(__schedule):
     return max_count
 
 
-# Function for adding new course and saving it in schedule
-def add_course(stud_no, sched_day):
-    # Design for adding new course
+# Function for inputting total course for each day
+def total_course():
+    while True:  # Validate key_pressed
+        try:
+            _total_course = int(input_key(f"{"":<24}│     Total course MAX(6): "))
+            if _total_course <= 6:  # Check if user input is between 1-6
+                print("\033[3E", end="")
+                clear(4)
+                print(("│" + " " * 40 + "│").center(columns))
+                break
+            else:
+                print("\r", end="")
+                print("\033[1F", end="")
+        except ValueError:  # Check if user input is not integer
+            print("\r", end="")
+            print("\033[1F", end="")
+    return _total_course
+
+
+# Function for adding course
+def add_course(stud_no, schedule_day):
+    print(("├" + "─" * 40 + "┤").center(columns))
+    print(('│' + " " * 40 + '│').center(columns))
     print(("│" + " " * 40 + "│").center(columns))
+    print(("│" + ' ' * 40 + "│").center(columns))
     print(("│" + " " * 40 + "│").center(columns))
-    print(("│" + " " * 40 + "│").center(columns))
-    print(("│" + " " * 40 + "│").center(columns))
-    print(("│" + " " * 40 + "│").center(columns))
+    print(('│' + ' ' * 40 + '│').center(columns))
     print(("│" + " " * 40 + "│").center(columns))
     print(("╰" + "─" * 40 + "╯").center(columns))
     print("\033[7F", end="")
-    print(f"{"":<24}│ ► {sched_day}")
+    print(f"{"":<24}│ ► {schedule_day}")
     print("\033[2E", end="")
-    while True:  # Validate key_pressed
-        try:
-            total_course = int(input_key(f"{"":<24}│     Total course MAX(6): "))
-            if total_course <= 6:
-                print("\033[3E", end="")
-                clear(4)
-                print(("│" + " " * 40 + "│").center(columns))
-                break
-            else:
-                print("\r", end="")
-                print("\033[1F", end="")
-        except ValueError:
-            print("\r", end="")
-            print("\033[1F", end="")
 
+    _total_course = total_course()
+    _course_entry = []
     print("\033[5F")
-    print(f"{"":<24}│ ► {sched_day} [{total_course}]")
+    print(f"{"":<24}│ ► {schedule_day} [{_total_course}]")
 
-    num = 0  # Num is for current total course in a day
-    while num < total_course:  # If num is less than the set total_course the loop will continue to execute
-        # Adding course and time design
-        print(f"│{"-" * 36:^40}│".center(columns))
-        print(f"│{"   Course Title :":<40}│".center(columns))
-        print(f"│{"   Time         :":<40}│".center(columns))
-        print(("│" + " " * 40 + "│").center(columns))
-        print(("╰" + "─" * 40 + "╯").center(columns))
+    count = 0
+    _course_entry.extend(course_entry(stud_no, _total_course, schedule_day, count, None))
+    return _course_entry
 
-        print("\033[4F", end="")
-        sched_course = str(limit_input(f"{"":<24}│   Course Title : ", 19))
-        print("\033[1E", end="")
-        while True:  # Checking for time format
-            print(("│" + " " * 40 + "│").center(columns))
+
+# Function for inputting course title and time
+def course_entry(stud_no, _total_course, _schedule_day, _count, _update_schedule):
+    new_schedule = []
+    if _total_course > 0:  # Check if total_course is not zero
+        while _count < _total_course:  # If num is less than the set total_course the loop will continue to execute
+            # Adding course and time design
+            print(f"│{"-" * 36:^40}│".center(columns))
+            print(f"│{"   Course Title :":<40}│".center(columns))
+            print(f"│{"   Time         :":<40}│".center(columns))
             print(("│" + " " * 40 + "│").center(columns))
             print(("╰" + "─" * 40 + "╯").center(columns))
-            print("\033[3F", end="")
 
-            sched_time = str(limit_input(f"{"":<24}│   Time         : ", 19).upper())
-            if validate_time_format(sched_time):
-                start, end = map(convert_to_24hrs, sched_time.split(' - '))
-                if (end - start) > 0:
-                    break
-                else:
-                    print("\033[3E", end="")
-                    msg = input_key(f"{"":<24}MSG: Wrong time schedule. ")
-                    if msg:
-                        clear(4)
+            print("\033[4F", end="")
+            schedule_course = str(limit_input(f"{"":<24}│   Course Title : ", 19))
+            print("\033[1E", end="")
+
+            schedule_time = time_entry()
+
+            # Checking for conflict schedule
+            if _update_schedule:  # If schedule to modify is not empty
+                conflict = check_conflict(_update_schedule, _schedule_day, schedule_time)
+            else:
+                conflict = check_conflict(new_schedule, _schedule_day, schedule_time)
+
+            if conflict is None:
+                new_schedule.append((stud_no, schedule_course, _schedule_day, schedule_time))
+                _count += 1
+                print("\033[1E", end="")
             else:
                 print("\033[3E", end="")
-                msg = input_key(f"{"":<19}MSG: Invalid time format.\n"
-                                f"{"":<19}     Please follow the format: 10:00 AM - 12:00 PM ")
+                msg = input_key((f"MSG: Conflict schedule with {conflict.upper()}.  ".center(columns)) +
+                                "\033[D" * (45 - int((31 + len(conflict)) / 2)))
                 if msg:
-                    clear(5)
+                    clear(6)
 
-        # Checking for conflict schedule
-        conflict = check_conflict(schedule, sched_day, sched_time)
-        if conflict is None:
-            schedule.append((stud_no, sched_course, sched_day, sched_time))
-            num += 1
-            print("\033[1E", end="")
-        else:
+        print("\033[2E", end="")
+    else:
+        print("\033[1E", end="")
+
+    clear((3 * _count) + 4)
+    return new_schedule
+
+
+# Function for inputting and validating time
+def time_entry():
+    while True:
+        print(('│' + " " * 40 + '│').center(columns))
+        print(("│" + " " * 40 + "│").center(columns))
+        print(("╰" + "─" * 40 + "╯").center(columns))
+        print("\033[3F", end="")
+
+        # User input
+        _schedule_time = str(limit_input(f"{"":<24}│   Time         : ", 19).upper())
+        # Check the format of input time
+        if validate_time_format(_schedule_time):  # If time format is correct
+            start, end = map(convert_to_24hrs, _schedule_time.split(' - '))
+            if end > start:  # Check if end time is greater than to start time
+                break
+            else:  # Show message if false
+                print("\033[3E", end="")
+                msg = input_key((f"MSG: Wrong time schedule.  ".center(columns)) + "\033[32D")
+                if msg:
+                    clear(4)
+        else:  # Show message if false
             print("\033[3E", end="")
-            msg = input_key(f"{"":<24}MSG: conflict schedule with {conflict.upper()}. ")
+            msg = input_key(f"{"":<19}MSG: Invalid time format.\n"
+                            f"{"":<19}     Please follow the format: 10:00 AM - 12:00 PM ")
             if msg:
-                clear(6)
+                clear(5)
+    return _schedule_time
 
-    print("\033[2E", end="")
-    clear((3 * num) + 3)
+
+# Function for displaying student_details and class_schedule
+def display_student_and_class_schedule(_class_schedule):
+    global columns
+    max_schedule = max_schedule_day(_class_schedule)
+    if max_schedule == 6:  # If the total count is equal to 6 it will resize the console height
+        set_console_size(120, 53)
+    else:  # Else the console will resize the width only
+        set_console_size(120, 45)
+
+    center_console_window()  # Center the console
+    columns = os.get_terminal_size().columns  # Save the size of console width
+
+    # Checking again if not in update student details
+    if updating_student_details:
+        tab_title("UPDATE STUDENT DETAILS")
+    else:
+        tab_title("UPDATE SCHEDULE")
+
+    # Display student details
+    _details(student_details)
+
+    # Display the new class schedule
+    class_schedule(_class_schedule)
 
 
 # Function for updating course
-def update_course(stud_no, sched_day, current_total_course, day_to_update):
-    global new_schedule
+def update_course(_stud_no, _schedule_day, _current_total_course, _day_to_update, _schedule):
     global current_str
-    num = 0
+    _update_schedule = []
+    count = 0
 
-    # Design for updating course
+    print(("├" + "─" * 40 + "┤").center(columns))
+    print(('│' + " " * 40 + "│").center(columns))
+    print(('│' + " " * 40 + "│").center(columns))
     print(("│" + " " * 40 + "│").center(columns))
-    print(("│" + " " * 40 + "│").center(columns))
-    print(("│" + " " * 40 + "│").center(columns))
-    print(("│" + " " * 40 + "│").center(columns))
-    print(("│" + " " * 40 + "│").center(columns))
-    print(("│" + " " * 40 + "│").center(columns))
+    print(("│" + " " * 40 + '│').center(columns))
+    print(('│' + ' ' * 40 + "│").center(columns))
     print(("│" + " " * 40 + "│").center(columns))
     print(("╰" + "─" * 40 + "╯").center(columns))
-
-    print("\033[8F", end="")
-    print(f"{"":<24}│ ► {sched_day} {[current_total_course]}")
+    print("\033[7F", end="")
+    print(f"{"":<24}│ ► {_schedule_day} {[_current_total_course]}")
     print("\033[2E", end="")
 
     # Request for the total course in a day
-    while True:
-        try:
-            total_course = int(input_key(f"{"":<24}│     Total course MAX(6): "))
-            if total_course <= 6:
-                print("\033[3E", end="")
-                clear(4)
-                print(("│" + " " * 40 + "│").center(columns))
-                break
-            else:
-                print("\r", end="")
-                print("\033[1F", end="")
-        except ValueError:
-            print("\r", end="")
-            print("\033[1F", end="")
+    _total_course = total_course()
 
     # Display the total course
     print("\033[5E", end="")
     clear(9)
-    print(f"│{f"{" ► " + sched_day} {[total_course]}":<40}│".center(columns))
+    print(f"│{f"{" ► " + _schedule_day} {[_total_course]}":<40}│".center(columns))
 
     # Getting each schedule in day_to_update
-    for sched in day_to_update:
-        if num == total_course:  # Check if the total count of sched not exceed to total_course
+    for new_schedule in _day_to_update[:_total_course]:
+        while True:
+            # Design for course and time and display the current course
+            print(f"│{"-" * 36:^40}│".center(columns))
+            print(f"│{f"   Course Title : {new_schedule[1]}":<40}│".center(columns))
+            print(f"│{f"   Time         : {new_schedule[3]}":<40}│".center(columns))
+            print(("│" + " " * 40 + "│").center(columns))
+            print(("╰" + "─" * 40 + "╯").center(columns))
+
+            print("\033[4F", end="")
+            current_str = new_schedule[1]
+            schedule_course = str(limit_input(f"{"":<24}│   Course Title : ", 19))
+            print("\033[1E", end="")
+            current_str = new_schedule[3]
+            schedule_time = time_entry()
+            current_str = ""
+
+            # Checking for conflict schedule
+            conflict = check_conflict(_update_schedule, _schedule_day, schedule_time)
+            if conflict:
+                print("\033[3E", end="")
+                msg = input_key((f"MSG: Conflict schedule with {conflict.upper()}.  ".center(columns)) +
+                                "\033[D" * (45 - int((31 + len(conflict)) / 2)))
+                if msg:
+                    clear(6)
+                    continue
+
+            _update_schedule.append((_stud_no, schedule_course, _schedule_day, schedule_time))
+
+            count += 1
+            print("\033[1E", end="")
             break
 
-        # Design for course and time and display the current course
-        print(f"│{"-" * 36:^40}│".center(columns))
-        print(f"│{f"   Course Title : {sched[1]}":<40}│".center(columns))
-        print(f"│{f"   Time         : {sched[3]}":<40}│".center(columns))
-        print(("│" + " " * 40 + "│").center(columns))
-        print(("╰" + "─" * 40 + "╯").center(columns))
+    if count != _total_course:
+        _update_schedule.extend(course_entry(_stud_no, _total_course, _schedule_day,
+                                             count, _update_schedule))
 
-        print("\033[4F", end="")
-        current_str = sched[1]
-        sched_course = str(limit_input(f"{"":<24}│   Course Title : ", 19))
-        print("\033[1E", end="")
-        current_str = sched[3]
-        while True:
-            print(("│" + " " * 40 + "│").center(columns))
-            print(("│" + " " * 40 + "│").center(columns))
-            print(("╰" + "─" * 40 + "╯").center(columns))
-            print("\033[3F", end="")
-
-            sched_time = str(limit_input(f"{"":<24}│   Time         : ", 19).upper())
-            # Check the format of input time
-            if validate_time_format(sched_time):
-                start, end = map(convert_to_24hrs, sched_time.split(' - '))
-                if (end - start) > 0:
-                    break
-                else:
-                    print("\033[3E", end="")
-                    msg = input_key(f"{"":<24}MSG: Wrong time schedule. ")
-                    if msg:
-                        clear(4)
-            else:
-                print("\033[3E", end="")
-                msg = input_key(f"{"":<19}MSG: Invalid time format.\n"
-                                f"{"":<19}     Please follow the format: 10:00 AM - 12:00 PM ")
-                if msg:
-                    clear(5)
-
-        # Checking for conflict schedule
-        conflict = check_conflict(new_schedule, sched_day, sched_time)
-        if conflict is None:
-            new_schedule.append((stud_no, sched_course, sched_day, sched_time))
-            num += 1
-            print("\033[1E", end="")
-            pass
-        else:
-            print("\033[3E", end="")
-            msg = input_key(f"{"":<24}MSG: conflict schedule with {conflict.upper()}. ")
-            if msg:
-                clear(6)
-
-    current_str = ""
-    while num < total_course:  # If day_to_update less than to the total course
-        # Design for course and time
-        print(f"│{"-" * 36:^40}│".center(columns))
-        print(f"│{"   Course Title :":<40}│".center(columns))
-        print(f"│{"   Time         :":<40}│".center(columns))
-        print(("│" + " " * 40 + "│").center(columns))
-        print(("╰" + "─" * 40 + "╯").center(columns))
-
-        print("\033[4F", end="")
-        sched_course = str(limit_input(f"{"":<24}│   Course Title : ", 19))
-        print("\033[1E", end="")
-        while True:
-            print(("│" + " " * 40 + "│").center(columns))
-            print(("│" + " " * 40 + "│").center(columns))
-            print(("╰" + "─" * 40 + "╯").center(columns))
-            print("\033[3F", end="")
-
-            sched_time = str(limit_input(f"{"":<24}│   Time         : ", 19).upper())
-            # Check the format of input time
-            if validate_time_format(sched_time):
-                start, end = map(convert_to_24hrs, sched_time.split(' - '))
-                if (end - start) > 0:
-                    break
-                else:
-                    print("\033[3E", end="")
-                    msg = input_key(f"{"":<24}MSG: Wrong time schedule. ")
-                    if msg:
-                        clear(4)
-            else:
-                print("\033[3E", end="")
-                msg = input_key(f"{"":<19}MSG: Invalid time format.\n"
-                                f"{"":<19}     Please follow the format: 10:00 AM - 12:00 PM ")
-                if msg:
-                    clear(5)
-
-        # Checking for conflict schedule
-        conflict = check_conflict(schedule, sched_day, sched_time)
-        if conflict is None:
-            new_schedule.append((stud_no, sched_course, sched_day, sched_time))
-            num += 1
-            print("\033[1E", end="")
-        else:
-            print("\033[3E", end="")
-            msg = input_key(f"{"":<24}MSG: conflict schedule with {conflict.upper()}. ")
-            if msg:
-                clear(6)
-
-    # Clearing display for each day after updating
-    print("\033[2E", end="")
-    clear((3 * num) + 3)
+    return _update_schedule
 
 
 # Function for registration of new students
@@ -1216,9 +1196,9 @@ def register_new_student():
     global registering_new_student
     global student_details
     global days_of_week
-    global schedule
     global data
     global columns
+    schedule = []
 
     tab_title("REGISTER NEW STUDENT")
     if not registering_new_student:
@@ -1267,69 +1247,64 @@ def register_new_student():
         # Storing the student details as array list
         student_details = [stud_no, stud_name, stud_department, stud_degree, stud_level, stud_signature]
 
-        # Display option
         print("\033[3E", end="")
+
+        # design for adding class schedule
         print(("╭" + "─" * 40 + "╮").center(columns))
         print(f"│{"CLASS SCHEDULE:":^40}│".center(columns))
         print(("├" + "─" * 40 + "┤").center(columns))
+        print(('│' + ' ' * 40 + '│').center(columns))
         print(("│" + " " * 40 + "│").center(columns))
         print(("│" + " " * 40 + "│").center(columns))
         print(("│" + " " * 40 + "│").center(columns))
-        print(("│" + " " * 40 + "│").center(columns))
-        print(("│" + " " * 40 + "│").center(columns))
+        print(("│" + ' ' * 40 + "│").center(columns))
         print(("│" + " " * 40 + "│").center(columns))
         print(("╰" + "─" * 40 + "╯").center(columns))
 
-        # Allow user to choose weekdays only or include weekends
-        print("\033[7F", end="")
-        print(f"{"":<24}│  Option:")
-        print(f"{"":<24}│     [1] Weekdays only")
-        print(f"{"":<24}│     [2] Include weekends\n\n")
+        # Display option
+        while not days_of_week:
+            # Allow user to choose weekdays only or include weekends
+            print("\033[7F", end="")
+            print(f"{"":<24}│  Option:")
+            print(f"{"":<24}│     [1] Weekdays only")
+            print(f"{"":<24}│     [2] Include weekends\n\n")
 
-        while True:  # Validate key_pressed
-            key_pressed1 = input_key(f"{"":<24}│  Select: ")
-            match key_pressed1:
-                case "0":
-                    clear(100)
-                    student("Check Attendance")
-                case "1":
-                    clear(8)
-                    days_of_week = "Weekdays only"
-                    print(f"│{f"CLASS SCHEDULE [{days_of_week}]":^40}│".center(columns))
-                case "2":
-                    clear(8)
-                    days_of_week = "Include weekends"
-                    print(f"│{f"CLASS SCHEDULE [{days_of_week}]":^40}│".center(columns))
-                case _:
-                    print("\033[1F", end="")
-                    print("\r", end="")
-                    continue
-            break
-
-        print(("├" + "─" * 40 + "┤").center(columns), end="")
-        print("\033[1E", end="")
+            while True:  # Validate key_pressed
+                key_pressed1 = input_key(f"{"":<24}│  Select: ")
+                match key_pressed1:
+                    case "1":
+                        days_of_week = "Weekdays only"
+                    case "2":
+                        days_of_week = "Include weekends"
+                    case _:
+                        print("\033[1F", end="")
+                        print("\r", end="")
+                        continue
+                clear(8)
+                print(f"│{f"CLASS SCHEDULE [{days_of_week}]":^40}│".center(columns))
+                break
 
         # Adding courses
         while True:
             if days_of_week == "Weekdays only":
                 for day in days[:5]:
-                    add_course(stud_no, day)
+                    schedule.extend(add_course(stud_no, day))
                 break
             if days_of_week == "Include weekends":
                 for day in days:
-                    add_course(stud_no, day)
+                    schedule.extend(add_course(stud_no, day))
                 break
 
     # Sorting the schedule
-    schedule = sorted(schedule, key=sort_schedule)
+    _schedule = sorted(schedule, key=sort_schedule)
 
-    max_count = max_schedule_day(schedule)  # Calculating the total course list and save the largest count
+    max_count = max_schedule_day(_schedule)  # Calculating the total course list and save the largest count
 
     # Resizing console if the total max_count is 6
     if max_count == 6:
-        os.system(f"mode con cols={120} lines={53}")
+        set_console_size(120, 53)
     else:
-        os.system(f"mode con cols={120} lines={45}")
+        set_console_size(120, 45)
 
     center_console_window()  # Center console
     columns = os.get_terminal_size().columns  # Save the size width
@@ -1340,10 +1315,10 @@ def register_new_student():
     _details(student_details)
 
     # Display class schedule
-    class_schedule(schedule)
+    class_schedule(_schedule)
 
     # Check if no schedule and display a note
-    if not schedule:
+    if not _schedule:
         print(f"{"":5}NOTE: We see that there's no schedule.")
 
     # Allow user to choose what next to execute
@@ -1380,7 +1355,7 @@ def register_new_student():
                 register_new_student()
             case "Y":
                 add_student(student_details)
-                add_schedule(schedule)
+                add_schedule(_schedule)
                 connection.commit()  # Saving registration
                 break
             case _:
@@ -1542,46 +1517,24 @@ def update_student_details():
 # Function for updating schedule
 def update_schedule():
     global columns
-    global schedule
-    global new_schedule
     global in_update_student_details
     global updating_student_details
     global updating_class_schedule
-    new_schedule.clear()
+    global current_schedule
+    new_schedule = []
 
     if not updating_class_schedule and not registering_new_student:  # User not already in updating class schedule
-        schedule.clear()
-
         if not updating_student_details:  # Check if user not in update student details
-            schedule.clear()
+            current_schedule.clear()
             tab_title("UPDATE SCHEDULE")
             student("Update Schedule")
 
         # Searching for the schedule of the student
         cursor.execute("SELECT * FROM Class_Schedule WHERE Student_No = ?", (student_details[0],))
-        schedule.extend(cursor.fetchall())  # Store it as array list
+        current_schedule.extend(cursor.fetchall())  # Store it as array list
 
-        # Getting the largest total count of schedule
-        max_sched = max_schedule_day(schedule)
-        if max_sched == 6:  # If the total count is equal to 6 it will resize the console height
-            os.system(f"mode con cols={120} lines={53}")
-        else:  # Else the console will resize the width only
-            os.system(f"mode con cols={120} lines={45}")
-
-        center_console_window()  # Center the console
-        columns = os.get_terminal_size().columns  # Saving the size of console width
-
-        # Checking if user not in notifying student details
-        if updating_student_details:
-            tab_title("UPDATE STUDENT DETAILS")
-        else:
-            tab_title("UPDATE SCHEDULE")
-
-        # Display the student details
-        _details(student_details)
-
-        # Display all class schedule
-        class_schedule(schedule)
+        # Display student_details and class_schedule
+        display_student_and_class_schedule(current_schedule)
 
         # Allow user to choose if they want to update the schedule
         print("\n", end="")
@@ -1640,7 +1593,8 @@ def update_schedule():
         # Sorting the days
         _days.sort(key=lambda x: days.index(x))
 
-        print("\033[6F", end="")  # Move cursor up
+        print("\033[2E", end="")  # Move cursor down
+        clear(9)
     else:
         if days_of_week == "Weekdays only":
             _days = days[:5]
@@ -1651,51 +1605,32 @@ def update_schedule():
     for _day in _days:
         _total = 0
         _to_update = []
-        for sched in schedule:
-            if sched[2] == _day:
+        for _schedule in current_schedule:
+            if _schedule[2] == _day:
                 _total += 1
-                _to_update.append(sched)
+                _to_update.append(_schedule)
         # Calling for function to for updating each course
-        update_course(student_details[0], _day, _total, _to_update)
+        new_schedule.extend(update_course(student_details[0], _day, _total, _to_update, current_schedule))
 
     # Getting for the other not modified schedule
-    for sched in schedule:
-        if sched[2] not in _days:
-            new_schedule.append(sched)
+    for _schedule in current_schedule:
+        if _schedule[2] not in _days:
+            new_schedule.append(_schedule)
 
     # Sorting the schedule
-    new_schedule = sorted(new_schedule, key=sort_schedule)
+    _new_schedule = sorted(new_schedule, key=sort_schedule)
 
     # If registering_new_student it will return to registration
     if registering_new_student:
         return
 
-    # Getting the largest total count of schedule
-    max_sched = max_schedule_day(new_schedule)
-    if max_sched == 6:  # If the total count is equal to 6 it will resize the console height
-        os.system(f"mode con cols={120} lines={53}")
-    else:  # Else the console will resize the width only
-        os.system(f"mode con cols={120} lines={45}")
-
-    center_console_window()  # Center the console
-    columns = os.get_terminal_size().columns  # Save the size of console width
-
-    # Checking again if not in update student details
-    if updating_student_details:
-        tab_title("UPDATE STUDENT DETAILS")
-    else:
-        tab_title("UPDATE SCHEDULE")
-
-    # Display student details
-    _details(student_details)
-
-    # Display the new class schedule
-    class_schedule(new_schedule)
+    # Display student_details and class_schedule
+    display_student_and_class_schedule(_new_schedule)
 
     # Checking now if no schedule has been modified
     changes = False
-    for sched in new_schedule:
-        if sched not in schedule:
+    for _schedule in _new_schedule:
+        if _schedule not in current_schedule:
             changes = True
             break
 
@@ -1718,7 +1653,7 @@ def update_schedule():
                 update_schedule()
             case "Y":
                 cursor.execute("DELETE FROM Class_Schedule WHERE Student_No = ?", (student_details[0],))
-                add_schedule(new_schedule)
+                add_schedule(_new_schedule)
                 connection.commit()
                 clear(100)
                 os.system(f"mode con cols={90} lines={45}")
@@ -1754,5 +1689,4 @@ if __name__ == "__main__":
     set_console_size(90, 45)  # Resizing of console
     columns = os.get_terminal_size().columns   # Save the new column size
     center_console_window()   # Align the console to center
-    set_window_style()  # Applying the console styles
     check_attendance()  # Calling now the check_attendance function
