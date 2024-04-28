@@ -13,14 +13,18 @@ import sys
 
 # Initialize variable
 student_details = []
+new_student_details = []
 days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+temp_schedule = []
 current_schedule = []
+new_schedule = []
 days_of_week = ""
 current_str = ""
 data = ""
 columns = int
 in_register_new_student = False
 in_update_student_details = False
+in_updating_class_schedule = False
 registering_new_student = False
 updating_student_details = False
 updating_class_schedule = False
@@ -382,8 +386,16 @@ def login_attempt(_student):
 def student(__usage):
     global student_details
     global in_register_new_student
+    global in_updating_class_schedule
     global in_update_student_details
+    global updating_class_schedule
+    global updating_student_details
+    global registering_new_student
     student_details.clear()
+
+    updating_class_schedule = False
+    updating_student_details = False
+    registering_new_student = False
 
     # Login display design
     print("\n" * 9)
@@ -452,14 +464,21 @@ def student(__usage):
                     print("\033[3E", end="")
                     clear(100)
                     in_register_new_student = True
+                    in_updating_class_schedule = False
+                    in_update_student_details = False
                     register_new_student()
                 case "3":
                     print("\033[3E", end="")
                     clear(100)
+                    in_register_new_student = False
+                    in_updating_class_schedule = True
+                    in_update_student_details = False
                     update_schedule()
                 case "4":
                     print("\033[3E", end="")
                     clear(100)
+                    in_register_new_student = False
+                    in_updating_class_schedule = False
                     in_update_student_details = True
                     update_student_details()
                 case _:
@@ -1034,7 +1053,7 @@ def add_course(stud_no, schedule_day):
 
 # Function for inputting course title and time
 def course_entry(stud_no, _total_course, _schedule_day, _count, _update_schedule):
-    new_schedule = []
+    _schedule = []
     while _count < _total_course:  # If num is less than the set total_course the loop will continue to execute
         # Adding course and time design
         print(f"│{"-" * 36:^40}│".center(columns))
@@ -1053,10 +1072,10 @@ def course_entry(stud_no, _total_course, _schedule_day, _count, _update_schedule
         if _update_schedule:  # If schedule to modify is not empty
             conflict = check_conflict(_update_schedule, _schedule_day, schedule_time)
         else:
-            conflict = check_conflict(new_schedule, _schedule_day, schedule_time)
+            conflict = check_conflict(_schedule, _schedule_day, schedule_time)
 
         if conflict is None:
-            new_schedule.append((stud_no, schedule_course, _schedule_day, schedule_time))
+            _schedule.append((stud_no, schedule_course, _schedule_day, schedule_time))
             _count += 1
             print("\033[1E", end="")
         else:
@@ -1069,7 +1088,7 @@ def course_entry(stud_no, _total_course, _schedule_day, _count, _update_schedule
     print("\033[2E", end="")
     clear((3 * _count) + 4)
 
-    return new_schedule
+    return _schedule
 
 
 # Function for updating course
@@ -1100,20 +1119,20 @@ def update_course(_stud_no, _schedule_day, _current_total_course, _day_to_update
         print(f"│{f"{" ► " + _schedule_day} {[_total_course]}":<40}│".center(columns))
 
         # Getting each schedule in day_to_update
-        for new_schedule in _day_to_update[:_total_course]:
+        for _new_schedule in _day_to_update[:_total_course]:
             while True:
                 # Design for course and time and display the current course
                 print(f"│{"-" * 36:^40}│".center(columns))
-                print(f"│{f"   Course Title : {new_schedule[1]}":<40}│".center(columns))
-                print(f"│{f"   Time         : {new_schedule[3]}":<40}│".center(columns))
+                print(f"│{f"   Course Title : {_new_schedule[1]}":<40}│".center(columns))
+                print(f"│{f"   Time         : {_new_schedule[3]}":<40}│".center(columns))
                 print(("│" + " " * 40 + "│").center(columns))
                 print(("╰" + "─" * 40 + "╯").center(columns))
 
                 print("\033[4F", end="")
-                current_str = new_schedule[1]
+                current_str = _new_schedule[1]
                 schedule_course = str(limit_input(f"{"":<24}│   Course Title : ", 19))
                 print("\033[1E", end="")
-                current_str = new_schedule[3]
+                current_str = _new_schedule[3]
                 schedule_time = time_entry()
                 current_str = ""
 
@@ -1136,6 +1155,9 @@ def update_course(_stud_no, _schedule_day, _current_total_course, _day_to_update
         if count != _total_course:
             _update_schedule.extend(course_entry(_stud_no, _total_course, _schedule_day,
                                                  count, _update_schedule))
+        else:
+            print("\033[2E", end="")
+            clear((3 * count) + 4)
     else:
         clear(5)
 
@@ -1175,16 +1197,27 @@ def time_entry():
 def display_student_and_class_schedule(_class_schedule):
     global columns
     max_schedule = max_schedule_day(_class_schedule)
-    if max_schedule == 6:  # If the total count is equal to 6 it will resize the console height
-        set_console_size(120, 53)
-    else:  # Else the console will resize the width only
+    # Resize the console height based on largest maximum count of schedule
+    if max_schedule == 6:
+        if registering_new_student or updating_student_details:
+            set_console_size(120, 53)
+        else:
+            set_console_size(120, 49)
+    elif max_schedule == 5:
+        if registering_new_student or updating_student_details:
+            set_console_size(120, 49)
+        else:
+            set_console_size(120, 45)
+    else:
         set_console_size(120, 45)
 
     center_console_window()  # Center the console
     columns = os.get_terminal_size().columns  # Save the size of console width
 
     # Checking again if not in update student details
-    if updating_student_details:
+    if registering_new_student:
+        tab_title("REGISTER NEW STUDENT")
+    elif updating_student_details:
         tab_title("UPDATE STUDENT DETAILS")
     else:
         tab_title("UPDATE SCHEDULE")
@@ -1199,14 +1232,20 @@ def display_student_and_class_schedule(_class_schedule):
 # Function for registration of new students
 def register_new_student():
     global registering_new_student
+    global updating_student_details
     global student_details
+    global current_schedule
+    global new_schedule
+    global temp_schedule
     global days_of_week
     global data
     global columns
-    schedule = []
 
     tab_title("REGISTER NEW STUDENT")
-    if not registering_new_student:
+    if not registering_new_student and not updating_student_details:
+        days_of_week = ""
+        new_schedule.clear()
+
         # Registration design
         print(("╭" + "─" * 84 + "╮").center(columns))
         print(f"│{"STUDENT DETAILS:":^84}│".center(columns))
@@ -1293,41 +1332,24 @@ def register_new_student():
         while True:
             if days_of_week == "Weekdays only":
                 for day in days[:5]:
-                    schedule.extend(add_course(stud_no, day))
+                    new_schedule.extend(add_course(stud_no, day))
                 break
             if days_of_week == "Include weekends":
                 for day in days:
-                    schedule.extend(add_course(stud_no, day))
+                    new_schedule.extend(add_course(stud_no, day))
                 break
 
     # Sorting the schedule
-    _schedule = sorted(schedule, key=sort_schedule)
+    new_schedule = sorted(new_schedule, key=sort_schedule)
 
-    max_count = max_schedule_day(_schedule)  # Calculating the total course list and save the largest count
-
-    # Resizing console if the total max_count is 6
-    if max_count == 6:
-        set_console_size(120, 53)
-    else:
-        set_console_size(120, 45)
-
-    center_console_window()  # Center console
-    columns = os.get_terminal_size().columns  # Save the size width
-    clear(100)  # Clear display
-    tab_title("REGISTER NEW STUDENT")
-
-    # Display student details
-    _details(student_details)
-
-    # Display class schedule
-    class_schedule(_schedule)
+    display_student_and_class_schedule(new_schedule)
 
     # Check if no schedule and display a note
-    if not _schedule:
+    if not new_schedule:
         print(f"{"":5}NOTE: We see that there's no schedule.")
 
     # Allow user to choose what next to execute
-    print("\n")
+    print("\n", end="")
     print(("-" * int(columns - 4)).center(columns))
     print(f"[S] Update Schedule{"":<26}[D] Update Student Details\n".center(columns))
     while True:  # Validating key pressed
@@ -1338,8 +1360,11 @@ def register_new_student():
                 os.system(f"mode con cols={90} lines={45}")
                 columns = os.get_terminal_size().columns
                 center_console_window()
+                current_schedule.extend(new_schedule)
+                temp_schedule = current_schedule
                 registering_new_student = True
                 update_schedule()
+                current_schedule.clear()
                 clear(100)
                 register_new_student()
             case "D":
@@ -1348,19 +1373,13 @@ def register_new_student():
                 columns = os.get_terminal_size().columns
                 center_console_window()
                 registering_new_student = True
+                updating_student_details = True
                 update_student_details()
-                if data:
-                    print("\033[8E", end="")
-                    clear(100)
-                    print("\033[23E", end="")
-                    print("MSG: Student already registered.".center(columns))
-                    print("\033[f", end="")
-                    check_attendance()
-                clear(100)
+                updating_student_details = False
                 register_new_student()
             case "Y":
                 add_student(student_details)
-                add_schedule(_schedule)
+                add_schedule(new_schedule)
                 connection.commit()  # Saving registration
                 break
             case _:
@@ -1379,17 +1398,19 @@ def register_new_student():
 
     # Clear variable and return to check attendance
     student_details.clear()
-    schedule.clear()
+    new_schedule.clear()
     check_attendance()
 
 
 # Function for updating student details
 def update_student_details():
     global student_details
+    global new_student_details
     global data
     global columns
     global current_str
     global in_update_student_details
+    global in_updating_class_schedule
     global updating_student_details
 
     if not updating_student_details and not in_register_new_student:  # Check if user not updating student details
@@ -1436,53 +1457,72 @@ def update_student_details():
 
     # Checking if in_register_new_student
     if in_register_new_student:
-        current_str = stud_no
         print("\033[8F", end="")
-        stud_no = str(limit_input(f"  │  Student No.: ", 67).upper())
-        print("\033[1E", end="")
+        current_str = student_details[0]
+        stud_no = str(limit_input(f"  │  Student No.: ", 8).upper())
+        current_str = ""
 
         # Searching for the student if already exist or registered in database
         cursor.execute(f"SELECT Student_No FROM Student_Info WHERE Student_No = ?", (stud_no,))
         data = cursor.fetchone()
 
         if data:
-            current_str = ""
-            return
+            clear(4)
+            _details(student_details)
+            print(f"{"":<5}MSG: Student({stud_no}) already registered.\n")
+            print(("-" * 86).center(90))
+
+            while True:
+                key_pressed = input_key(f"{"":<5}Press [Y] to discard changes or [N] to update again. ")
+                match key_pressed.upper():
+                    case "Y":
+                        return
+                    case "N":
+                        clear(100)
+                        return update_student_details()
+                    case _:
+                        clear(1)
+        print("\033[1E", end="")
     else:
         print("\033[7F", end="")
 
-    current_str = stud_name
-    stud_name = str(limit_input(f"  │  Name       : ", 67).upper())
-    print("\033[1E", end="")
-    current_str = stud_department
-    stud_department = str(limit_input(f"  │  Department : ", 67).title())
-    print("\033[1E", end="")
-    current_str = stud_degree
-    stud_degree = str(limit_input(f"  │  Degree     : ", 67).title())
-    print("\033[1E", end="")
-    current_str = stud_level
-    stud_level = str(limit_input(f"  │  Year Level : ", 67))
-    print("\033[1E", end="")
-    current_str = stud_signature
-    stud_signature = str(limit_input(f"  │  Signature  : ", 25))
-    current_str = ""
+    if not in_updating_class_schedule:
+        current_str = stud_name
+        stud_name = str(limit_input(f"  │  Name       : ", 67).upper())
+        print("\033[1E", end="")
+        current_str = stud_department
+        stud_department = str(limit_input(f"  │  Department : ", 67).title())
+        print("\033[1E", end="")
+        current_str = stud_degree
+        stud_degree = str(limit_input(f"  │  Degree     : ", 67).title())
+        print("\033[1E", end="")
+        current_str = stud_level
+        stud_level = str(limit_input(f"  │  Year Level : ", 67))
+        print("\033[1E", end="")
+        current_str = stud_signature
+        stud_signature = str(limit_input(f"  │  Signature  : ", 25))
+        current_str = ""
 
-    # Checking if in_register_new_student
-    if in_register_new_student:
-        student_details = [stud_no, stud_name, stud_department, stud_degree, stud_level, stud_signature]
-        return
+        new_student_details = [stud_no, stud_name, stud_department, stud_degree, stud_level, stud_signature]
+
+        # Checking if in_register_new_student
+        if in_register_new_student:
+            student_details = new_student_details
+            return
+    else:
+        print("\033[4E", end="")
 
     # Checking for changes
     changes = False
-    if stud_name != student_details[1]:
+    if new_student_details[1] != student_details[1]:
         changes = True
-    elif stud_department != student_details[2]:
+    elif new_student_details[2] != student_details[2]:
         changes = True
-    elif stud_degree != student_details[3]:
+    elif new_student_details[3] != student_details[3]:
         changes = True
-    elif stud_level != student_details[4]:
+    elif new_student_details[4] != student_details[4]:
         changes = True
-    elif stud_signature != student_details[5]:
+    elif new_student_details[5] != student_details[5]:
         changes = True
 
     # Show message if no changes
@@ -1508,13 +1548,15 @@ def update_student_details():
                 in_update_student_details = False
                 updating_student_details = False
                 check_attendance()
-            case "N":
-                clear(100)
-                update_student_details()
             case "S":
                 student_details = [stud_no, stud_name, stud_department, stud_degree, stud_level, stud_signature]
                 update_student(student_details)
+                in_updating_class_schedule = True
                 update_schedule()
+                update_student_details()
+            case "N":
+                clear(100)
+                update_student_details()
             case _:
                 clear(1)
 
@@ -1525,8 +1567,10 @@ def update_schedule():
     global in_update_student_details
     global updating_student_details
     global updating_class_schedule
+    global new_schedule
     global current_schedule
-    new_schedule = []
+    global temp_schedule
+    _update_schedule = []
 
     if not updating_class_schedule and not registering_new_student:  # User not already in updating class schedule
         if not updating_student_details:  # Check if user not in update student details
@@ -1536,7 +1580,8 @@ def update_schedule():
 
         # Searching for the schedule of the student
         cursor.execute("SELECT * FROM Class_Schedule WHERE Student_No = ?", (student_details[0],))
-        current_schedule.extend(cursor.fetchall())  # Store it as array list
+        current_schedule = cursor.fetchall()  # Store it as array list
+        temp_schedule = current_schedule
 
         # Display student_details and class_schedule
         display_student_and_class_schedule(current_schedule)
@@ -1553,7 +1598,10 @@ def update_schedule():
                     os.system(f"mode con cols={90} lines={45}")
                     columns = os.get_terminal_size().columns
                     center_console_window()
-                    check_attendance()
+                    if in_update_student_details:
+                        return
+                    else:
+                        check_attendance()
                 case "Y":  # It will continue to update the class schedule
                     os.system(f"mode con cols={90} lines={45}")
                     columns = os.get_terminal_size().columns
@@ -1577,34 +1625,28 @@ def update_schedule():
     print(("╭" + "─" * 40 + "╮").center(columns))
     print(f"│{"CLASS SCHEDULE:":^40}│".center(columns))
     print(("├" + "─" * 40 + "┤").center(columns))
-    if not registering_new_student:
-        # Allow user to select what those days are to be modified
-        print(f"│{"  Select a day you want to update.":<40}│".center(columns))
-        print(f"│{"     " + f"{"[1] Monday":<20}[5] Friday":<40}│".center(columns))
-        print(f"│{"     " + f"{"[2] Tuesday":<20}[6] Saturday":<40}│".center(columns))
-        print(f"│{"     " + f"{"[3] Wednesday":<20}[7] Sunday":<40}│".center(columns))
-        print(f"│{"     [4] Thursday":<40}│".center(columns))
-        print(("│" + " " * 40 + "│").center(columns))
-        print(("│" + " " * 40 + "│").center(columns))
-        print(("╰" + "─" * 40 + "╯").center(columns))
+    # Allow user to select what those days are to be modified
+    print(f"│{"  Select a day you want to update.":<40}│".center(columns))
+    print(f"│{"     " + f"{"[1] Monday":<20}[5] Friday":<40}│".center(columns))
+    print(f"│{"     " + f"{"[2] Tuesday":<20}[6] Saturday":<40}│".center(columns))
+    print(f"│{"     " + f"{"[3] Wednesday":<20}[7] Sunday":<40}│".center(columns))
+    print(f"│{"     [4] Thursday":<40}│".center(columns))
+    print(("│" + " " * 40 + "│").center(columns))
+    print(("│" + " " * 40 + "│").center(columns))
+    print(("╰" + "─" * 40 + "╯").center(columns))
 
-        print("\033[2F", end="")
-        key_pressed = int_input(f"{"":<24}│  Select: ", 7)
+    print("\033[2F", end="")
+    key_pressed = int_input(f"{"":<24}│  Select: ", 7)
 
-        # Converting the selected numbers as days and storing it as array
-        for day in key_pressed:
-            _days.append(days[int(day) - 1])
+    # Converting the selected numbers as days and storing it as array
+    for day in key_pressed:
+        _days.append(days[int(day) - 1])
 
-        # Sorting the days
-        _days.sort(key=lambda x: days.index(x))
+    # Sorting the days
+    _days.sort(key=lambda x: days.index(x))
 
-        print("\033[2E", end="")  # Move cursor down
-        clear(9)
-    else:
-        if days_of_week == "Weekdays only":
-            _days = days[:5]
-        if days_of_week == "Include weekends":
-            _days = days
+    print("\033[2E", end="")  # Move cursor down
+    clear(9)
 
     # updating now each class schedule
     for _day in _days:
@@ -1615,29 +1657,31 @@ def update_schedule():
                 _total += 1
                 _to_update.append(_schedule)
         # Calling for function to for updating each course
-        new_schedule.extend(update_course(student_details[0], _day, _total, _to_update, current_schedule))
+        _update_schedule.extend(update_course(student_details[0], _day, _total, _to_update, current_schedule))
 
     # Getting for the other not modified schedule
-    for _schedule in current_schedule:
+    for _schedule in temp_schedule:
         if _schedule[2] not in _days:
-            new_schedule.append(_schedule)
+            _update_schedule.append(_schedule)
+
+    # Temporarily store the updated schedule
+    temp_schedule = _update_schedule
 
     # Sorting the schedule
-    _new_schedule = sorted(new_schedule, key=sort_schedule)
+    _update_schedule = sorted(_update_schedule, key=sort_schedule)
 
     # If registering_new_student it will return to registration
     if registering_new_student:
+        new_schedule = _update_schedule
         return
 
     # Display student_details and class_schedule
-    display_student_and_class_schedule(_new_schedule)
+    display_student_and_class_schedule(_update_schedule)
 
     # Checking now if no schedule has been modified
     changes = False
-    for _schedule in _new_schedule:
-        if _schedule not in current_schedule:
-            changes = True
-            break
+    if set(_update_schedule) != set(current_schedule):
+        changes = True
 
     # If no schedule has been modified it will show note
     if not changes:
@@ -1658,7 +1702,7 @@ def update_schedule():
                 update_schedule()
             case "Y":
                 cursor.execute("DELETE FROM Class_Schedule WHERE Student_No = ?", (student_details[0],))
-                add_schedule(_new_schedule)
+                add_schedule(_update_schedule)
                 connection.commit()
                 clear(100)
                 os.system(f"mode con cols={90} lines={45}")
@@ -1690,8 +1734,8 @@ if __name__ == "__main__":
     if not is_single_instance(console_title):
         exit()
 
-    set_console_title(console_title)   # Set the title of console
+    set_console_title(console_title)  # Set the title of console
     set_console_size(90, 45)  # Resizing of console
-    columns = os.get_terminal_size().columns   # Save the new column size
-    center_console_window()   # Align the console to center
+    columns = os.get_terminal_size().columns  # Save the new column size
+    center_console_window()  # Align the console to center
     check_attendance()  # Calling now the check_attendance function
