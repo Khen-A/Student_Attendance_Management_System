@@ -1,4 +1,4 @@
-# Release v1.1.1.1
+# Student Attendance Management System
 **Overview**
 
 The Student Attendance Management System is a user-friendly tool that allows schools to easily monitor student attendance. This console application has a simple interface that allows teachers to quickly record and manage attendance without hassle. Automating attendance management allows schools to improve efficiency while also ensuring accurate attendance records. This system streamlines the time-consuming process of tracking attendance, allowing educators to devote more time to teaching. Overall, the Student Attendance Management System is an invaluable resource for educational institutions.
