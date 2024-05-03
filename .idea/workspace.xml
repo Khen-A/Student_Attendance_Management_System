@@ -4,7 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0462fbb1-c0fa-49d4-8ba8-1d768033b352" name="Changes" comment="Update" />
+    <list default="true" id="0462fbb1-c0fa-49d4-8ba8-1d768033b352" name="Changes" comment="Update">
+      <change beforePath="$PROJECT_DIR$/.idea/Student_Attendance_Management_System.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/Student_Attendance_Management_System.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources/2474e4da-754a-4042-87f0-00ecf8e71ac7.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources/2474e4da-754a-4042-87f0-00ecf8e71ac7.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_14_04_2024_5_35_pm__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_14_04_2024_5_35_pm__Changes_.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/SAData.db" beforeDir="false" afterPath="$PROJECT_DIR$/SAData.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Student_Attendance.py" beforeDir="false" afterPath="$PROJECT_DIR$/Student_Attendance.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/versionfile.txt" beforeDir="false" afterPath="$PROJECT_DIR$/versionfile.txt" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -163,6 +172,16 @@
       <workItem from="1714035655858" duration="1008000" />
       <workItem from="1714037126163" duration="867000" />
       <workItem from="1714038118082" duration="279000" />
+      <workItem from="1714579447942" duration="86000" />
+      <workItem from="1714579537093" duration="10477000" />
+      <workItem from="1714621591645" duration="10383000" />
+      <workItem from="1714651068121" duration="9690000" />
+      <workItem from="1714661306355" duration="101000" />
+      <workItem from="1714736953661" duration="66000" />
+      <workItem from="1714737023791" duration="182000" />
+      <workItem from="1714737209161" duration="471000" />
+      <workItem from="1714740210882" duration="2047000" />
+      <workItem from="1714742299598" duration="35000" />
     </task>
     <task id="LOCAL-00001" summary="Update">
       <option name="closed" value="true" />
@@ -391,6 +410,6 @@
     <option name="LAST_COMMIT_MESSAGE" value="Update" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/Student_Attendance_Management_System$Student_Attendance.coverage" NAME="Student_Attendance Coverage Results" MODIFIED="1714038259831" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Student_Attendance_Management_System$Student_Attendance.coverage" NAME="Student_Attendance Coverage Results" MODIFIED="1714741969649" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
