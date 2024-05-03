@@ -10,4 +10,4 @@ The Student Attendance Management System is a user-friendly tool that allows sch
 - **Custom Reports:**                  Create personalized attendance reports for specific classes, times, or students.
 - **Seamless Integration:**          Works smoothly with existing systems for easy data sharing.
 
-**Note:** *THIS SCRIPT WAS MADE FOR PROJECT ONLY*
+> **Note:** *THIS SCRIPT WAS MADE FOR PROJECT ONLY*
