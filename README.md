@@ -10,4 +10,5 @@ The Student Attendance Management System is a user-friendly tool that allows sch
 - **Custom Reports:**                  Create personalized attendance reports for specific classes, times, or students.
 - **Seamless Integration:**          Works smoothly with existing systems for easy data sharing.
 
+Flowchart: *https://lucid.app/lucidchart/439a92cb-e783-4967-bd58-3575a4d54627/view*
 > **Note:** *THIS APPLICATION WAS MADE FOR PROJECT ONLY*
